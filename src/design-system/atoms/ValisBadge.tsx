@@ -20,7 +20,7 @@ export const ValisBadge: React.FC<ValisBadgeProps> = ({
 
   return (
     <span
-      className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-[5px] whitespace-nowrap ${styles[variant]} ${className}`}
+      className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-[var(--valis-checkbox-radius)] whitespace-nowrap ${styles[variant]} ${className}`}
     >
       {children}
     </span>

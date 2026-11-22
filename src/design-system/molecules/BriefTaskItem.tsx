@@ -101,7 +101,7 @@ export const BriefTaskItem: React.FC<BriefTaskItemProps> = ({
             : isCompleted
             ? 'Undo completion'
             : isJiraTask
-            ? `✓ Close in Jira (${item.externalKey ?? 'Jira'})`
+            ? `Close in Jira (${item.externalKey ?? 'Jira'})`
             : 'Mark Done'
         }
         onToggle={handleLeftControlClick}

@@ -26,11 +26,50 @@ import {
   INITIAL_MANAGEMENT_COMMITMENTS,
   ValisMemoryService,
 } from '../services/valisMemoryService';
+import * as DesignSystem from '../design-system';
 import {
   AGENT_UI_RULES,
   validateFactHasCitations,
-} from '../design-system/AGENT_UI_RULES';
-import { VALIS_TOKENS } from '../design-system/tokens';
+  VALIS_PRIMITIVES,
+  VALIS_ALIAS_TOKENS,
+  VALIS_TOKENS,
+} from '../design-system';
+
+function hexToRelativeLuminance(hex: string): number {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16) / 255;
+  const g = parseInt(clean.slice(2, 4), 16) / 255;
+  const b = parseInt(clean.slice(4, 6), 16) / 255;
+  const toLinear = (c: number) =>
+    c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  return 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+}
+
+function contrastRatio(fgHex: string, bgHex: string): number {
+  const l1 = hexToRelativeLuminance(fgHex);
+  const l2 = hexToRelativeLuminance(bgHex);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function collectUiTsxFiles(rootDir: string): string[] {
+  const uiDirs = [
+    path.join(rootDir, 'src/components'),
+    path.join(rootDir, 'src/design-system/atoms'),
+    path.join(rootDir, 'src/design-system/molecules'),
+  ];
+  const tsxFiles: string[] = [path.join(rootDir, 'src/App.tsx')];
+
+  for (const dir of uiDirs) {
+    for (const entry of fs.readdirSync(dir)) {
+      if (entry.endsWith('.tsx')) {
+        tsxFiles.push(path.join(dir, entry));
+      }
+    }
+  }
+  return tsxFiles;
+}
 
 test('filterReports returns all reports when default filters are active', () => {
   const result = filterReports(INITIAL_REPORTS, {
@@ -98,8 +137,8 @@ test('ValisMemoryService isolates OrgBrain vs Second Brain and handles Jira Prop
   assert.equal(visibleAfterSnooze.some((i) => i.id === 'owe-1'), false);
 });
 
-test('AGENT_UI_RULES enforces all 10 core guardrails and primary source citations on every brief item', () => {
-  assert.equal(AGENT_UI_RULES.length, 10);
+test('AGENT_UI_RULES enforces all 11 core guardrails, barrel exports, and primary source citations on every brief item', () => {
+  assert.equal(AGENT_UI_RULES.length, 11);
   assert.deepEqual(
     AGENT_UI_RULES.map((r) => r.id),
     [
@@ -113,10 +152,35 @@ test('AGENT_UI_RULES enforces all 10 core guardrails and primary source citation
       'VALIS-RULE-08',
       'VALIS-RULE-09',
       'VALIS-RULE-10',
+      'VALIS-RULE-11',
     ]
   );
   assert.equal(VALIS_TOKENS.geometry.drawerWidth, '420px');
   assert.equal(VALIS_TOKENS.colors.blockedRed, '#9E3B2B');
+
+  // Verify public barrel exports all canonical primitives
+  for (const exportName of [
+    'ValisButton',
+    'ValisToggle',
+    'ValisSegmentedSwitch',
+    'ValisCard',
+    'ValisCheckbox',
+    'ValisBadge',
+    'ValisDrawer',
+    'ValisPageHeader',
+    'ValisSectionEyebrow',
+    'SourceCitationLink',
+    'MetricCard',
+    'SecurityToolStatusDropdown',
+    'ValisChatComposer',
+    'ValisKnotMark',
+  ]) {
+    assert.ok(
+      exportName in DesignSystem,
+      `src/design-system/index.ts must export ${exportName}`
+    );
+  }
+
   for (const item of INITIAL_BRIEF_ITEMS) {
     assert.equal(validateFactHasCitations(item.sources), true);
   }
@@ -136,11 +200,30 @@ test('toggleBriefItemCompletion and cycleCommitmentStatus work deterministically
   assert.equal(nextList[0].status, 'At risk');
 });
 
-test('Design System Token Architecture: 1:1 CSS parity and zero raw hex literals in any .tsx component', () => {
+test('Design System CI Gate: 3-tier token parity (TS, CSS, W3C JSON), zero raw hexes, zero OS emojis, zero arbitrary rounded-[5px]', () => {
   const rootDir = process.cwd();
   const cssContent = fs.readFileSync(path.join(rootDir, 'src/index.css'), 'utf8');
+  const jsonContent = fs.readFileSync(
+    path.join(rootDir, 'src/design-system/tokens.json'),
+    'utf8'
+  );
+  const parsedJson = JSON.parse(jsonContent);
 
-  // 1. Verify every color in VALIS_TOKENS.colors is defined in src/index.css
+  // 1. Verify every Tier 1 primitive color is synchronized 1:1 in src/index.css and tokens.json
+  for (const [primKey, hexVal] of Object.entries(VALIS_PRIMITIVES.color)) {
+    assert.equal(
+      cssContent.toUpperCase().includes(hexVal.toUpperCase()),
+      true,
+      `VALIS_PRIMITIVES.color.${primKey} (${hexVal}) must be synchronized in src/index.css`
+    );
+    assert.equal(
+      parsedJson.primitive?.color?.[primKey]?.$value?.toUpperCase(),
+      hexVal.toUpperCase(),
+      `VALIS_PRIMITIVES.color.${primKey} (${hexVal}) must match src/design-system/tokens.json`
+    );
+  }
+
+  // 2. Verify every flat semantic color in VALIS_TOKENS.colors is synchronized in src/index.css
   for (const [tokenKey, hexVal] of Object.entries(VALIS_TOKENS.colors)) {
     assert.equal(
       cssContent.toUpperCase().includes(hexVal.toUpperCase()),
@@ -149,30 +232,62 @@ test('Design System Token Architecture: 1:1 CSS parity and zero raw hex literals
     );
   }
 
-  // 2. Verify zero raw hex hashes (#XXXXXX) exist in any .tsx UI component file
-  const uiDirs = [
-    path.join(rootDir, 'src/components'),
-    path.join(rootDir, 'src/design-system/atoms'),
-    path.join(rootDir, 'src/design-system/molecules'),
-  ];
-  const tsxFiles: string[] = [path.join(rootDir, 'src/App.tsx')];
+  // 3. Scan every UI .tsx component for raw hex literals, OS color emojis, and arbitrary rounded-[5px]
+  const tsxFiles = collectUiTsxFiles(rootDir);
+  const rawHexRegex = /#[0-9A-Fa-f]{3,8}\b/g;
+  const osEmojiRegex = /(\p{Emoji_Presentation}|[\u{2600}-\u{27BF}]\uFE0F|[\u{1F300}-\u{1FAFF}])/gu;
+  const arbitraryRadiusRegex = /rounded-\[5px\]/g;
 
-  for (const dir of uiDirs) {
-    for (const entry of fs.readdirSync(dir)) {
-      if (entry.endsWith('.tsx')) {
-        tsxFiles.push(path.join(dir, entry));
-      }
-    }
-  }
-
-  const rawHexRegex = /#[0-9A-Fa-f]{6}\b/g;
   for (const filePath of tsxFiles) {
     const content = fs.readFileSync(filePath, 'utf8');
-    const matches = content.match(rawHexRegex);
+    const relPath = path.relative(rootDir, filePath);
+
+    const hexMatches = content.match(rawHexRegex);
     assert.equal(
-      matches,
+      hexMatches,
       null,
-      `Found hardcoded raw hex literal(s) ${matches?.join(', ')} in ${path.relative(rootDir, filePath)}. Use semantic Valis tokens instead.`
+      `Found hardcoded raw hex literal(s) ${hexMatches?.join(', ')} in ${relPath}. Use semantic Valis tokens instead.`
+    );
+
+    const emojiMatches = content.match(osEmojiRegex);
+    assert.equal(
+      emojiMatches,
+      null,
+      `Found banned OS color emoji(s) ${emojiMatches?.join(', ')} in ${relPath}. Use monochrome Lucide icons or clean typography (VALIS-RULE-05).`
+    );
+
+    const radiusMatches = content.match(arbitraryRadiusRegex);
+    assert.equal(
+      radiusMatches,
+      null,
+      `Found arbitrary rounded-[5px] in ${relPath}. Use semantic --valis-*-radius tokens instead (VALIS-RULE-11).`
+    );
+  }
+});
+
+test('Design System CI Gate: WCAG 2.1 AA contrast ratios (>= 4.5:1) across all core ink & status pairs', () => {
+  const { surface, border, ink, status } = VALIS_ALIAS_TOKENS;
+
+  const pairs: { name: string; fg: string; bg: string; min: number }[] = [
+    { name: 'ink.primary on surface.page', fg: ink.primary, bg: surface.page, min: 4.5 },
+    { name: 'ink.primary on surface.canvas', fg: ink.primary, bg: surface.canvas, min: 4.5 },
+    { name: 'ink.secondary on surface.page', fg: ink.secondary, bg: surface.page, min: 4.5 },
+    { name: 'ink.secondary on surface.canvas', fg: ink.secondary, bg: surface.canvas, min: 4.5 },
+    { name: 'ink.navInactive on surface.sidebar', fg: ink.navInactive, bg: surface.sidebar, min: 4.5 },
+    { name: 'ink.navInactive on border.divider (switch track)', fg: ink.navInactive, bg: border.divider, min: 4.5 },
+    { name: 'ink.muted on surface.canvas', fg: ink.muted, bg: surface.canvas, min: 4.5 },
+    { name: 'ink.completed on surface.canvas', fg: ink.completed, bg: surface.canvas, min: 4.5 },
+    { name: 'status.allowed on surface.canvas', fg: status.allowed, bg: surface.canvas, min: 4.5 },
+    { name: 'status.blocked on surface.canvas', fg: status.blocked, bg: surface.canvas, min: 4.5 },
+    { name: 'ink.link on surface.canvas', fg: ink.link, bg: surface.canvas, min: 4.5 },
+  ];
+
+  for (const pair of pairs) {
+    const ratio = contrastRatio(pair.fg, pair.bg);
+    assert.equal(
+      ratio >= pair.min,
+      true,
+      `WCAG AA contrast failure for ${pair.name}: ${ratio.toFixed(2)}:1 < ${pair.min}:1`
     );
   }
 });
@@ -270,5 +385,3 @@ test('Atomic Security Sandbox: cycleSecurityToolAccessOption and evaluateSecurit
   );
   assert.equal(sbCeo.statusTone, 'firewall');
 });
-
-

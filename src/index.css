@@ -1,161 +1,327 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   VALIS DESIGN SYSTEM — 3-TIER CSS TOKEN ARCHITECTURE
+   Synchronized 1:1 with src/design-system/tokens.ts & src/design-system/tokens.json
+============================================================================ */
+
 :root {
-  /* 1. Surfaces & Chrome (1:1 mirror of VALIS_TOKENS.colors) */
-  --valis-bg: #FAF8F3;
-  --valis-canvas: #FFFFFF;
-  --valis-sidebar: #F6F3EB;
-  --valis-sidebar-hover: #EDE9DF;
-  --valis-active-nav: #E6E1D6;
-  --valis-chrome: #F2EDE4;
-  --valis-tag-bg: #E8E4DC;
-  --valis-private-bg: #F5EFE4;
+  /* --------------------------------------------------------------------------
+     TIER 1: PRIMITIVE PALETTE & SCALES (Raw values live strictly here)
+  -------------------------------------------------------------------------- */
+  --valis-primitive-paper-0: #FFFFFF;
+  --valis-primitive-paper-50: #FAF8F3;
+  --valis-primitive-paper-100: #F6F3EB;
+  --valis-primitive-paper-150: #F5EFE4;
+  --valis-primitive-paper-200: #F2EDE4;
+  --valis-primitive-paper-250: #EFECE4;
+  --valis-primitive-paper-300: #EDE9DF;
+  --valis-primitive-paper-350: #EAE5D9;
+  --valis-primitive-paper-400: #E8E4DC;
+  --valis-primitive-paper-450: #E6E1D6;
+  --valis-primitive-paper-500: #E5DEC9;
+  --valis-primitive-paper-550: #E3DDD1;
+  --valis-primitive-paper-600: #DCD7CD;
+  --valis-primitive-paper-650: #D8D2C5;
+  --valis-primitive-paper-700: #C8C3B8;
+  --valis-primitive-paper-800: #B8B2A6;
+  --valis-primitive-paper-900: #9E998E;
 
-  /* 2. Borders, Hairlines & Dividers */
-  --valis-sidebar-border: #EAE5D9;
-  --valis-row-divider: #EFECE4;
-  --valis-chrome-border: #E3DDD1;
-  --valis-control-border: #DCD7CD;
-  --valis-control-border-hover: #B8B2A6;
-  --valis-private-border: #E5DEC9;
-  --valis-underline: #C8C3B8;
-  --valis-traffic-dots: #D8D2C5;
-  --valis-section-dash: #9E998E;
+  --valis-primitive-ink-950: #1A1917;
+  --valis-primitive-ink-850: #33312E;
+  --valis-primitive-ink-700: #4A4742;
+  --valis-primitive-ink-600: #5C5852;
+  --valis-primitive-ink-500: #6E6A63;
+  --valis-primitive-ink-450: #78736A;
+  --valis-primitive-ink-400: #8A857C;
+  --valis-primitive-amber-ink-700: #6E5634;
 
-  /* 3. Typography & Ink Hierarchy (WCAG AA) */
-  --valis-text-primary: #1A1917;
-  --valis-text-primary-hover: #33312E;
-  --valis-text-secondary: #4A4742;
-  --valis-text-nav-inactive: #5C5852;
-  --valis-text-muted: #6E6A63;
-  --valis-text-completed: #78736A;
-  --valis-text-subtle: #8A857C;
-  --valis-private-text: #6E5634;
+  --valis-primitive-forest-600: #1E7E45;
+  --valis-primitive-forest-100: #E6F2EA;
+  --valis-primitive-forest-200: #CFE5D6;
+  --valis-primitive-forest-300: #B8DFC6;
 
-  /* 4. Semantic Status & Editorial Accents */
-  --valis-live-green: #1E7E45;
-  --valis-live-green-bg: #E6F2EA;
-  --valis-live-green-border: #CFE5D6;
-  --valis-live-green-ring: #B8DFC6;
-  --valis-early-access-orange: #C87A28;
-  --valis-early-access-bg: #F3E5D8;
-  --valis-early-access-text: #9E4718;
-  --valis-delta-amber-bg: #FDF3E7;
-  --valis-delta-amber-border: #EAD2B5;
-  --valis-delta-amber-text: #8F561A;
-  --valis-ochre-bar: #B56B27;
-  --valis-link-blue: #1D63B8;
-  --valis-link-blue-underline: #98B9E2;
-  --valis-blocked-red: #9E3B2B;
+  --valis-primitive-crimson-600: #9E3B2B;
 
-  /* 5. Obsidian Dark Security Surface */
-  --valis-security-dark-bg: #0D0E12;
-  --valis-security-dark-surface: #13151C;
-  --valis-security-dark-elevated: #1C1F2A;
-  --valis-security-dark-elevated-hover: #282C3B;
-  --valis-security-dark-border: #22242C;
-  --valis-security-dark-border-active: #383C4E;
-  --valis-security-dark-text: #C9CDD8;
-  --valis-security-dark-muted: #8E93A4;
-  --valis-security-dark-subtle: #565A68;
-  --valis-security-dark-green: #28A75B;
-  --valis-security-dark-amber: #D9822B;
-  --valis-security-dark-link: #6CA2EA;
+  --valis-primitive-ochre-500: #C87A28;
+  --valis-primitive-ochre-600: #B56B27;
+  --valis-primitive-ochre-700: #8F561A;
+  --valis-primitive-ochre-800: #9E4718;
+  --valis-primitive-ochre-100: #FDF3E7;
+  --valis-primitive-ochre-150: #F3E5D8;
+  --valis-primitive-ochre-200: #EAD2B5;
 
-  /* 6. Avatar Palette & External Provider Glyphs */
-  --valis-avatar-slate: #5B6B82;
-  --valis-avatar-bronze: #8C6239;
-  --valis-avatar-sage: #4E7A5B;
-  --valis-avatar-plum: #7B4B6A;
-  --valis-avatar-steel: #386890;
-  --valis-brand-zoom: #2D8CFF;
-  --valis-brand-meet: #00897B;
-  --valis-brand-teams: #5C6BC0;
+  --valis-primitive-cobalt-600: #1D63B8;
+  --valis-primitive-cobalt-300: #98B9E2;
 
-  /* 7. Valis Layout & Geometry Tokens (1:1 mirror of VALIS_TOKENS.geometry) */
+  --valis-primitive-avatar-slate: #5B6B82;
+  --valis-primitive-avatar-bronze: #8C6239;
+  --valis-primitive-avatar-sage: #4E7A5B;
+  --valis-primitive-avatar-plum: #7B4B6A;
+  --valis-primitive-avatar-steel: #386890;
+
+  --valis-primitive-brand-zoom: #2D8CFF;
+  --valis-primitive-brand-meet: #00897B;
+  --valis-primitive-brand-teams: #5C6BC0;
+
+  --valis-primitive-radius-xs: 4px;
+  --valis-primitive-radius-sm: 6px;
+  --valis-primitive-radius-md: 8px;
+  --valis-primitive-radius-lg: 10px;
+  --valis-primitive-radius-full: 9999px;
+
+  --valis-duration-fast: 150ms;
+  --valis-duration-normal: 200ms;
+  --valis-ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* --------------------------------------------------------------------------
+     TIER 2: SEMANTIC ALIAS TOKENS (Reference Tier 1 Primitives only)
+  -------------------------------------------------------------------------- */
+  --valis-surface-page: var(--valis-primitive-paper-50);
+  --valis-surface-canvas: var(--valis-primitive-paper-0);
+  --valis-surface-sidebar: var(--valis-primitive-paper-100);
+  --valis-surface-sidebar-hover: var(--valis-primitive-paper-300);
+  --valis-surface-active-nav: var(--valis-primitive-paper-450);
+  --valis-surface-chrome: var(--valis-primitive-paper-200);
+  --valis-surface-tag: var(--valis-primitive-paper-400);
+  --valis-surface-private: var(--valis-primitive-paper-150);
+
+  --valis-border-default: var(--valis-primitive-paper-350);
+  --valis-border-divider: var(--valis-primitive-paper-250);
+  --valis-border-chrome: var(--valis-primitive-paper-550);
+  --valis-border-control: var(--valis-primitive-paper-600);
+  --valis-border-control-hover: var(--valis-primitive-paper-800);
+  --valis-border-private: var(--valis-primitive-paper-500);
+  --valis-border-underline: var(--valis-primitive-paper-700);
+  --valis-border-chart-muted: var(--valis-primitive-paper-650);
+  --valis-border-section-dash: var(--valis-primitive-paper-900);
+
+  --valis-ink-primary: var(--valis-primitive-ink-950);
+  --valis-ink-primary-hover: var(--valis-primitive-ink-850);
+  --valis-ink-secondary: var(--valis-primitive-ink-700);
+  --valis-ink-nav-inactive: var(--valis-primitive-ink-600);
+  --valis-ink-muted: var(--valis-primitive-ink-500);
+  --valis-ink-completed: var(--valis-primitive-ink-450);
+  --valis-ink-subtle: var(--valis-primitive-ink-400);
+  --valis-ink-private: var(--valis-primitive-amber-ink-700);
+  --valis-ink-link: var(--valis-primitive-cobalt-600);
+  --valis-ink-link-underline: var(--valis-primitive-cobalt-300);
+
+  --valis-status-allowed: var(--valis-primitive-forest-600);
+  --valis-status-allowed-bg: var(--valis-primitive-forest-100);
+  --valis-status-allowed-border: var(--valis-primitive-forest-200);
+  --valis-status-allowed-ring: var(--valis-primitive-forest-300);
+  --valis-status-blocked: var(--valis-primitive-crimson-600);
+  --valis-status-warning: var(--valis-primitive-ochre-500);
+  --valis-status-early-bg: var(--valis-primitive-ochre-150);
+  --valis-status-early-text: var(--valis-primitive-ochre-800);
+  --valis-status-delta-bg: var(--valis-primitive-ochre-100);
+  --valis-status-delta-border: var(--valis-primitive-ochre-200);
+  --valis-status-delta-text: var(--valis-primitive-ochre-700);
+  --valis-status-chart-accent: var(--valis-primitive-ochre-600);
+
+  --valis-focus-ring: var(--valis-primitive-cobalt-600);
+
+  /* Backwards-compatible semantic shorthands (strictly aliased to Tier 2) */
+  --valis-bg: var(--valis-surface-page);
+  --valis-canvas: var(--valis-surface-canvas);
+  --valis-sidebar: var(--valis-surface-sidebar);
+  --valis-sidebar-hover: var(--valis-surface-sidebar-hover);
+  --valis-active-nav: var(--valis-surface-active-nav);
+  --valis-chrome: var(--valis-surface-chrome);
+  --valis-tag-bg: var(--valis-surface-tag);
+  --valis-private-bg: var(--valis-surface-private);
+
+  --valis-sidebar-border: var(--valis-border-default);
+  --valis-row-divider: var(--valis-border-divider);
+  --valis-chrome-border: var(--valis-border-chrome);
+  --valis-control-border: var(--valis-border-control);
+  --valis-control-border-hover: var(--valis-border-control-hover);
+  --valis-private-border: var(--valis-border-private);
+  --valis-underline: var(--valis-border-underline);
+  --valis-traffic-dots: var(--valis-border-chart-muted);
+  --valis-section-dash: var(--valis-border-section-dash);
+
+  --valis-text-primary: var(--valis-ink-primary);
+  --valis-text-primary-hover: var(--valis-ink-primary-hover);
+  --valis-text-secondary: var(--valis-ink-secondary);
+  --valis-text-nav-inactive: var(--valis-ink-nav-inactive);
+  --valis-text-muted: var(--valis-ink-muted);
+  --valis-text-completed: var(--valis-ink-completed);
+  --valis-text-subtle: var(--valis-ink-subtle);
+  --valis-private-text: var(--valis-ink-private);
+
+  --valis-live-green: var(--valis-status-allowed);
+  --valis-live-green-bg: var(--valis-status-allowed-bg);
+  --valis-live-green-border: var(--valis-status-allowed-border);
+  --valis-live-green-ring: var(--valis-status-allowed-ring);
+  --valis-early-access-orange: var(--valis-status-warning);
+  --valis-early-access-bg: var(--valis-status-early-bg);
+  --valis-early-access-text: var(--valis-status-early-text);
+  --valis-delta-amber-bg: var(--valis-status-delta-bg);
+  --valis-delta-amber-border: var(--valis-status-delta-border);
+  --valis-delta-amber-text: var(--valis-status-delta-text);
+  --valis-ochre-bar: var(--valis-status-chart-accent);
+  --valis-link-blue: var(--valis-ink-link);
+  --valis-link-blue-underline: var(--valis-ink-link-underline);
+  --valis-blocked-red: var(--valis-status-blocked);
+
+  --valis-avatar-slate: var(--valis-primitive-avatar-slate);
+  --valis-avatar-bronze: var(--valis-primitive-avatar-bronze);
+  --valis-avatar-sage: var(--valis-primitive-avatar-sage);
+  --valis-avatar-plum: var(--valis-primitive-avatar-plum);
+  --valis-avatar-steel: var(--valis-primitive-avatar-steel);
+  --valis-brand-zoom: var(--valis-primitive-brand-zoom);
+  --valis-brand-meet: var(--valis-primitive-brand-meet);
+  --valis-brand-teams: var(--valis-primitive-brand-teams);
+
+  /* --------------------------------------------------------------------------
+     TIER 3: COMPONENT & LAYOUT GEOMETRY TOKENS
+  -------------------------------------------------------------------------- */
   --valis-sidebar-width: 230px;
   --valis-app-workspace-max-width: 1020px;
   --valis-admin-workspace-max-width: 1100px;
   --valis-drawer-width: 420px;
-  --valis-context-drawer-width: 420px;
-  --valis-panel-radius: 10px;
-  --valis-card-radius: 8px;
-  --valis-control-radius: 6px;
-  --valis-button-radius: 6px;
-  --valis-checkbox-radius: 4px;
-  --valis-pill-radius: 9999px;
+  --valis-context-drawer-width: var(--valis-drawer-width);
+
+  --valis-panel-radius: var(--valis-primitive-radius-lg);
+  --valis-card-radius: var(--valis-primitive-radius-md);
+  --valis-control-radius: var(--valis-primitive-radius-sm);
+  --valis-button-radius: var(--valis-primitive-radius-sm);
+  --valis-checkbox-radius: var(--valis-primitive-radius-xs);
+  --valis-pill-radius: var(--valis-primitive-radius-full);
 }
 
 @theme {
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* Surfaces & Chrome */
-  --color-valis-bg: var(--valis-bg);
-  --color-valis-canvas: var(--valis-canvas);
-  --color-valis-sidebar: var(--valis-sidebar);
-  --color-valis-sidebarhover: var(--valis-sidebar-hover);
-  --color-valis-activeitem: var(--valis-active-nav);
-  --color-valis-chrome: var(--valis-chrome);
-  --color-valis-tagbg: var(--valis-tag-bg);
-  --color-valis-privatebg: var(--valis-private-bg);
+  --color-valis-bg: var(--valis-surface-page);
+  --color-valis-canvas: var(--valis-surface-canvas);
+  --color-valis-sidebar: var(--valis-surface-sidebar);
+  --color-valis-sidebarhover: var(--valis-surface-sidebar-hover);
+  --color-valis-activeitem: var(--valis-surface-active-nav);
+  --color-valis-chrome: var(--valis-surface-chrome);
+  --color-valis-tagbg: var(--valis-surface-tag);
+  --color-valis-privatebg: var(--valis-surface-private);
 
   /* Borders, Hairlines & Dividers */
-  --color-valis-sidebarborder: var(--valis-sidebar-border);
-  --color-valis-divider: var(--valis-row-divider);
-  --color-valis-chromeborder: var(--valis-chrome-border);
-  --color-valis-controlborder: var(--valis-control-border);
-  --color-valis-controlhover: var(--valis-control-border-hover);
-  --color-valis-privateborder: var(--valis-private-border);
-  --color-valis-underline: var(--valis-underline);
-  --color-valis-dots: var(--valis-traffic-dots);
-  --color-valis-dash: var(--valis-section-dash);
+  --color-valis-sidebarborder: var(--valis-border-default);
+  --color-valis-divider: var(--valis-border-divider);
+  --color-valis-chromeborder: var(--valis-border-chrome);
+  --color-valis-controlborder: var(--valis-border-control);
+  --color-valis-controlhover: var(--valis-border-control-hover);
+  --color-valis-privateborder: var(--valis-border-private);
+  --color-valis-underline: var(--valis-border-underline);
+  --color-valis-dots: var(--valis-border-chart-muted);
+  --color-valis-dash: var(--valis-border-section-dash);
 
   /* Typography & Ink Hierarchy */
-  --color-valis-text: var(--valis-text-primary);
-  --color-valis-texthover: var(--valis-text-primary-hover);
-  --color-valis-secondary: var(--valis-text-secondary);
-  --color-valis-navinactive: var(--valis-text-nav-inactive);
-  --color-valis-muted: var(--valis-text-muted);
-  --color-valis-completed: var(--valis-text-completed);
-  --color-valis-subtle: var(--valis-text-subtle);
-  --color-valis-privatetext: var(--valis-private-text);
+  --color-valis-text: var(--valis-ink-primary);
+  --color-valis-texthover: var(--valis-ink-primary-hover);
+  --color-valis-secondary: var(--valis-ink-secondary);
+  --color-valis-navinactive: var(--valis-ink-nav-inactive);
+  --color-valis-muted: var(--valis-ink-muted);
+  --color-valis-completed: var(--valis-ink-completed);
+  --color-valis-subtle: var(--valis-ink-subtle);
+  --color-valis-privatetext: var(--valis-ink-private);
 
   /* Semantic Status & Editorial Accents */
-  --color-valis-green: var(--valis-live-green);
-  --color-valis-greenbg: var(--valis-live-green-bg);
-  --color-valis-greenborder: var(--valis-live-green-border);
-  --color-valis-greenring: var(--valis-live-green-ring);
-  --color-valis-orange: var(--valis-early-access-orange);
-  --color-valis-earlybg: var(--valis-early-access-bg);
-  --color-valis-earlytext: var(--valis-early-access-text);
-  --color-valis-deltabg: var(--valis-delta-amber-bg);
-  --color-valis-deltaborder: var(--valis-delta-amber-border);
-  --color-valis-deltatext: var(--valis-delta-amber-text);
-  --color-valis-ochre: var(--valis-ochre-bar);
-  --color-valis-blue: var(--valis-link-blue);
-  --color-valis-blueunderline: var(--valis-link-blue-underline);
-  --color-valis-blockedred: var(--valis-blocked-red);
-
-  /* Obsidian Dark Security Surface */
-  --color-valis-darkcard: var(--valis-security-dark-bg);
-  --color-valis-darksurface: var(--valis-security-dark-surface);
-  --color-valis-darkelevated: var(--valis-security-dark-elevated);
-  --color-valis-darkelevatedhover: var(--valis-security-dark-elevated-hover);
-  --color-valis-darkborder: var(--valis-security-dark-border);
-  --color-valis-darkborderactive: var(--valis-security-dark-border-active);
-  --color-valis-darktext: var(--valis-security-dark-text);
-  --color-valis-darkmuted: var(--valis-security-dark-muted);
-  --color-valis-darksubtle: var(--valis-security-dark-subtle);
-  --color-valis-darkgreen: var(--valis-security-dark-green);
-  --color-valis-darkamber: var(--valis-security-dark-amber);
-  --color-valis-darklink: var(--valis-security-dark-link);
+  --color-valis-green: var(--valis-status-allowed);
+  --color-valis-greenbg: var(--valis-status-allowed-bg);
+  --color-valis-greenborder: var(--valis-status-allowed-border);
+  --color-valis-greenring: var(--valis-status-allowed-ring);
+  --color-valis-orange: var(--valis-status-warning);
+  --color-valis-earlybg: var(--valis-status-early-bg);
+  --color-valis-earlytext: var(--valis-status-early-text);
+  --color-valis-deltabg: var(--valis-status-delta-bg);
+  --color-valis-deltaborder: var(--valis-status-delta-border);
+  --color-valis-deltatext: var(--valis-status-delta-text);
+  --color-valis-ochre: var(--valis-status-chart-accent);
+  --color-valis-blue: var(--valis-ink-link);
+  --color-valis-blueunderline: var(--valis-ink-link-underline);
+  --color-valis-blockedred: var(--valis-status-blocked);
+  --color-valis-focus: var(--valis-focus-ring);
 }
 
 body {
   font-family: var(--font-sans);
   letter-spacing: -0.015em;
-  background-color: var(--valis-bg);
-  color: var(--valis-text-primary);
+  background-color: var(--valis-surface-page);
+  color: var(--valis-ink-primary);
+}
+
+/* Global Keyboard Accessibility: High-contrast visible focus ring */
+button:focus-visible,
+a:focus-visible,
+input:not(.valis-composer-input):focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--valis-focus-ring);
+  outline-offset: 2px;
+}
+
+/* Unified Floating Composer: Warm-Paper Hover, Focus Halo & Editorial Accent Reveal */
+.valis-composer {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--valis-surface-canvas);
+  border: 1px solid var(--valis-border-control);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--valis-ink-primary) 4%, transparent);
+  transition:
+    border-color var(--valis-duration-normal) var(--valis-ease-standard),
+    box-shadow var(--valis-duration-normal) var(--valis-ease-standard),
+    transform var(--valis-duration-normal) var(--valis-ease-standard);
+}
+
+.valis-composer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 16px;
+  height: 1.5px;
+  border-radius: var(--valis-primitive-radius-full);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--valis-status-warning) 50%,
+    transparent 100%
+  );
+  opacity: 0;
+  transform: scaleX(0.2);
+  transform-origin: center;
+  pointer-events: none;
+  transition:
+    transform 280ms var(--valis-ease-standard),
+    opacity 220ms var(--valis-ease-standard);
+}
+
+.valis-composer:hover {
+  border-color: var(--valis-border-control-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    0 4px 12px -3px color-mix(in srgb, var(--valis-ink-primary) 8%, transparent),
+    0 1px 2px color-mix(in srgb, var(--valis-ink-primary) 4%, transparent);
+}
+
+.valis-composer:focus-within {
+  border-color: var(--valis-ink-primary);
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 3.5px var(--valis-surface-active-nav),
+    0 8px 20px -6px color-mix(in srgb, var(--valis-ink-primary) 12%, transparent);
+}
+
+.valis-composer:focus-within::before {
+  opacity: 0.85;
+  transform: scaleX(1);
+}
+
+.valis-composer-input:focus,
+.valis-composer-input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .tabular-nums {
@@ -174,4 +340,23 @@ body {
 .valis-wave-bar {
   animation: valisWavePulse 0.85s ease-in-out infinite;
   transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .valis-wave-bar {
+    animation: none;
+    transform: scaleY(0.75);
+  }
+
+  .valis-composer:hover,
+  .valis-composer:focus-within {
+    transform: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }

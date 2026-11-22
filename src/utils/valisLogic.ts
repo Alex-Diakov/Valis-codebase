@@ -242,6 +242,7 @@ export function evaluateSecuritySandboxPrompt(
   statusLabel: string;
   statusTone: 'allowed' | 'blocked' | 'firewall';
   replyText: string;
+  sourceCitation?: string;
   auditEntry: SecurityAuditTrailEntry;
 } {
   const q = promptText.toLowerCase();
@@ -327,6 +328,7 @@ export function evaluateSecuritySandboxPrompt(
       statusLabel,
       statusTone: 'allowed',
       replyText,
+      sourceCitation: 'Workday HR Payroll · ERP',
       auditEntry: {
         id: `aud-chat-${Date.now()}`,
         timestamp: 'Just now',
@@ -382,6 +384,7 @@ export function evaluateSecuritySandboxPrompt(
       statusLabel,
       statusTone: 'allowed',
       replyText,
+      sourceCitation: 'Zoom transcript · Team Lead Grant',
       auditEntry: {
         id: `aud-chat-${Date.now()}`,
         timestamp: 'Just now',
@@ -425,6 +428,7 @@ export function evaluateSecuritySandboxPrompt(
       statusTone: 'allowed',
       replyText:
         'Salesforce CRM: Acme Corp Q4 renewal ($420k ARR) is in Legal Review.',
+      sourceCitation: 'Salesforce CRM · Account notes',
       auditEntry: {
         id: `aud-chat-${Date.now()}`,
         timestamp: 'Just now',
@@ -461,6 +465,7 @@ export function evaluateSecuritySandboxPrompt(
     statusLabel: `Allowed · ${teamRule?.slackCalendar ?? 'Read-only'} scope`,
     statusTone: 'allowed',
     replyText: `Verified answer for ${actorName} using permitted ${teamRule?.teamName ?? 'workspace'} sources (Slack & Jira).`,
+    sourceCitation: 'Slack & Jira · OrgBrain',
     auditEntry: {
       id: `aud-chat-${Date.now()}`,
       timestamp: 'Just now',

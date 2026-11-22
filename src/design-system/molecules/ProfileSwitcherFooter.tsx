@@ -1,5 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronUp, Check } from 'lucide-react';
+import {
+  ChevronUp,
+  Check,
+  Monitor,
+  Shield,
+  Layers,
+  SlidersHorizontal,
+} from 'lucide-react';
 import { ProductSurface, UxVersionMode } from '../../types/valis';
 
 interface ProfileSwitcherFooterProps {
@@ -32,8 +39,17 @@ export const ProfileSwitcherFooter: React.FC<ProfileSwitcherFooterProps> = ({
         setOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setOpen(false);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [open]);
 
   return (
@@ -46,10 +62,10 @@ export const ProfileSwitcherFooter: React.FC<ProfileSwitcherFooterProps> = ({
         <div
           role="dialog"
           aria-label="Workspace and UX mode switcher"
-          className="absolute bottom-full left-2.5 right-2.5 mb-2 bg-valis-canvas border border-valis-chromeborder rounded-[var(--valis-control-radius)] p-2 z-50"
+          className="absolute bottom-full left-2.5 right-2.5 mb-2 bg-valis-canvas border border-valis-chromeborder rounded-[var(--valis-control-radius)] shadow-lg p-2 z-50"
         >
           {/* Section 1: Workspace Surface */}
-          <div className="px-2 pt-1 pb-1 text-[10px] uppercase tracking-[0.08em] text-valis-subtle font-semibold">
+          <div className="px-2 pt-1 pb-1 text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
             Workspace Surface
           </div>
           <div className="space-y-0.5 mb-2">
@@ -59,13 +75,16 @@ export const ProfileSwitcherFooter: React.FC<ProfileSwitcherFooterProps> = ({
                 onSelectSurface('employee-app');
                 setOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-2 py-1.5 rounded-[var(--valis-checkbox-radius)] text-[12px] text-left transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-[var(--valis-checkbox-radius)] text-[12.5px] text-left transition-colors cursor-pointer ${
                 surface === 'employee-app'
                   ? 'bg-valis-sidebar text-valis-text font-medium'
-                  : 'text-valis-muted hover:bg-valis-bg hover:text-valis-text'
+                  : 'text-valis-navinactive hover:bg-valis-bg hover:text-valis-text'
               }`}
             >
-              <span className="truncate">🖥 Valis Employee App</span>
+              <span className="inline-flex items-center gap-2 min-w-0">
+                <Monitor className="w-[13.5px] h-[13.5px] shrink-0" strokeWidth={1.75} />
+                <span className="truncate">Valis Employee App</span>
+              </span>
               {surface === 'employee-app' && (
                 <Check className="w-3.5 h-3.5 text-valis-text shrink-0" />
               )}
@@ -77,13 +96,16 @@ export const ProfileSwitcherFooter: React.FC<ProfileSwitcherFooterProps> = ({
                 onSelectSurface('admin-console');
                 setOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-2 py-1.5 rounded-[var(--valis-checkbox-radius)] text-[12px] text-left transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-[var(--valis-checkbox-radius)] text-[12.5px] text-left transition-colors cursor-pointer ${
                 surface === 'admin-console'
                   ? 'bg-valis-sidebar text-valis-text font-medium'
-                  : 'text-valis-muted hover:bg-valis-bg hover:text-valis-text'
+                  : 'text-valis-navinactive hover:bg-valis-bg hover:text-valis-text'
               }`}
             >
-              <span className="truncate">⚙️ Valis Admin Console</span>
+              <span className="inline-flex items-center gap-2 min-w-0">
+                <Shield className="w-[13.5px] h-[13.5px] shrink-0" strokeWidth={1.75} />
+                <span className="truncate">Valis Admin Console</span>
+              </span>
               {surface === 'admin-console' && (
                 <Check className="w-3.5 h-3.5 text-valis-text shrink-0" />
               )}
@@ -93,7 +115,7 @@ export const ProfileSwitcherFooter: React.FC<ProfileSwitcherFooterProps> = ({
           <div className="border-t border-valis-divider my-1.5" />
 
           {/* Section 2: UX Version Mode */}
-          <div className="px-2 pt-1 pb-1 text-[10px] uppercase tracking-[0.08em] text-valis-subtle font-semibold">
+          <div className="px-2 pt-1 pb-1 text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
             UX Version Mode
           </div>
           <div className="space-y-0.5">
@@ -103,13 +125,16 @@ export const ProfileSwitcherFooter: React.FC<ProfileSwitcherFooterProps> = ({
                 onSelectUxMode('v1-baseline');
                 setOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-2 py-1.5 rounded-[var(--valis-checkbox-radius)] text-[12px] text-left transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-[var(--valis-checkbox-radius)] text-[12.5px] text-left transition-colors cursor-pointer ${
                 uxMode === 'v1-baseline'
                   ? 'bg-valis-sidebar text-valis-text font-medium'
-                  : 'text-valis-muted hover:bg-valis-bg hover:text-valis-text'
+                  : 'text-valis-navinactive hover:bg-valis-bg hover:text-valis-text'
               }`}
             >
-              <span className="truncate">v1.0 Original Baseline</span>
+              <span className="inline-flex items-center gap-2 min-w-0">
+                <Layers className="w-[13.5px] h-[13.5px] shrink-0" strokeWidth={1.75} />
+                <span className="truncate">v1.0 Original Baseline</span>
+              </span>
               {uxMode === 'v1-baseline' && (
                 <Check className="w-3.5 h-3.5 text-valis-text shrink-0" />
               )}
@@ -121,13 +146,19 @@ export const ProfileSwitcherFooter: React.FC<ProfileSwitcherFooterProps> = ({
                 onSelectUxMode('v2-improvements');
                 setOpen(false);
               }}
-              className={`w-full flex items-center justify-between px-2 py-1.5 rounded-[var(--valis-checkbox-radius)] text-[12px] text-left transition-colors cursor-pointer ${
+              className={`w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-[var(--valis-checkbox-radius)] text-[12.5px] text-left transition-colors cursor-pointer ${
                 uxMode === 'v2-improvements'
                   ? 'bg-valis-sidebar text-valis-text font-medium'
-                  : 'text-valis-muted hover:bg-valis-bg hover:text-valis-text'
+                  : 'text-valis-navinactive hover:bg-valis-bg hover:text-valis-text'
               }`}
             >
-              <span className="truncate">✨ v2.0 HCI Improvements</span>
+              <span className="inline-flex items-center gap-2 min-w-0">
+                <SlidersHorizontal
+                  className="w-[13.5px] h-[13.5px] shrink-0"
+                  strokeWidth={1.75}
+                />
+                <span className="truncate">v2.0 HCI Improvements</span>
+              </span>
               {uxMode === 'v2-improvements' && (
                 <Check className="w-3.5 h-3.5 text-valis-text shrink-0" />
               )}

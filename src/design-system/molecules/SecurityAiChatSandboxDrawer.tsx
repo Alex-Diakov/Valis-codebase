@@ -1,9 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { ArrowUpRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 import {
   SecuritySandboxChatMessage,
   SecurityToolAccessOption,
 } from '../../types/valis';
-import { SecurityToolSegmentedSwitch } from '../atoms/SecurityToolAccessPill';
+import { SecurityToolStatusDropdown } from '../atoms/SecurityToolAccessPill';
+import { ValisSegmentedSwitch } from '../atoms/ValisSegmentedSwitch';
+import { ValisChatComposer, ValisKnotMark } from './ValisChatComposer';
 import { ValisDrawer } from './ValisDrawer';
 
 export type SecurityToolFieldKey =
@@ -48,7 +51,9 @@ interface SecurityAiChatSandboxDrawerProps {
     toolLabel: string
   ) => void;
   messages: SecuritySandboxChatMessage[];
+  isVerifying?: boolean;
   onSendMessage: (text: string) => void;
+  onClearMessages?: () => void;
   onClose: () => void;
 }
 
@@ -76,9 +81,9 @@ export const DRAWER_EIGHT_TOOLS: {
 ];
 
 const QUICK_TEST_PROMPTS: string[] = [
-  'Team call yesterday?',
-  'Show HR salaries',
-  "Coworker's private Second Brain?",
+  "What did my team discuss on yesterday's call?",
+  'Show HR executive salaries',
+  "Read coworker's private Second Brain",
 ];
 
 export const SecurityAiChatSandboxDrawer: React.FC<
@@ -98,35 +103,60 @@ export const SecurityAiChatSandboxDrawer: React.FC<
   toolValues,
   onChangeToolPermission,
   messages,
+  isVerifying = false,
   onSendMessage,
+  onClearMessages,
   onClose,
 }) => {
   const [inputValue, setInputValue] = useState('');
   const [toolFilterQuery, setToolFilterQuery] = useState('');
   const chatThreadRef = useRef<HTMLDivElement | null>(null);
 
+  const conversationMessages = messages.filter((msg) => msg.role !== 'system');
+
   useEffect(() => {
     if (chatThreadRef.current) {
       chatThreadRef.current.scrollTop = chatThreadRef.current.scrollHeight;
     }
-  }, [messages, activeDrawerTab]);
+  }, [conversationMessages.length, isVerifying, activeDrawerTab]);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitPrompt = () => {
     const trimmed = inputValue.trim();
-    if (!trimmed) return;
+    if (!trimmed || isVerifying) return;
     onSendMessage(trimmed);
     setInputValue('');
   };
 
+  const trimmedQuery = toolFilterQuery.trim().toLowerCase();
   const filteredTools = DRAWER_EIGHT_TOOLS.filter((tool) =>
-    tool.label.toLowerCase().includes(toolFilterQuery.trim().toLowerCase())
+    tool.label.toLowerCase().includes(trimmedQuery)
+  );
+
+  const getToolSortRank = (option: SecurityToolAccessOption): number => {
+    if (option === 'Edit (Approve)') return 0;
+    if (option === 'Read-only') return 1;
+    return 2;
+  };
+
+  const sortedActiveTools = DRAWER_EIGHT_TOOLS.filter(
+    (tool) => toolValues[tool.field] !== 'No access'
+  ).sort(
+    (a, b) =>
+      getToolSortRank(toolValues[a.field]) - getToolSortRank(toolValues[b.field])
+  );
+
+  const offTools = DRAWER_EIGHT_TOOLS.filter(
+    (tool) => toolValues[tool.field] === 'No access'
+  );
+
+  const sortedFilteredTools = [...filteredTools].sort(
+    (a, b) =>
+      getToolSortRank(toolValues[a.field]) - getToolSortRank(toolValues[b.field])
   );
 
   const activeToolCount = contractLockedZeroCustomerData
     ? 0
-    : DRAWER_EIGHT_TOOLS.filter((t) => toolValues[t.field] !== 'No access')
-        .length;
+    : sortedActiveTools.length;
 
   const resolvedLeadName =
     leadName?.trim() ||
@@ -187,7 +217,7 @@ export const SecurityAiChatSandboxDrawer: React.FC<
       headerExtra={tabSwitcher}
       bodyClassName={
         activeDrawerTab === 'chat'
-          ? 'flex-1 overflow-y-auto px-5 pb-8 flex flex-col justify-between min-h-0'
+          ? 'flex-1 overflow-hidden px-5 pb-5 flex flex-col justify-between min-h-0'
           : 'flex-1 overflow-y-auto px-5 pb-8 min-h-0'
       }
     >
@@ -233,45 +263,23 @@ export const SecurityAiChatSandboxDrawer: React.FC<
                     Own calls only
                   </span>
                 ) : (
-                  <div
-                    role="group"
-                    aria-label={`${teamCallsLabel} switch for ${subjectName}`}
-                    data-testid="drawer-toggle-team-calls"
-                    className="inline-flex items-center bg-valis-divider border border-valis-chromeborder rounded-[5px] p-0.5 shrink-0"
-                  >
-                    <button
-                      type="button"
-                      aria-pressed={!teamCallsAllowed}
-                      onClick={() => {
-                        if (teamCallsAllowed) {
-                          onSetTeamCallsAllowed(false);
-                        }
-                      }}
-                      className={`text-[11.5px] px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)] border transition-colors cursor-pointer whitespace-nowrap ${
-                        !teamCallsAllowed
-                          ? 'bg-valis-canvas border-valis-controlborder text-valis-text font-medium'
-                          : 'border-transparent text-valis-navinactive hover:text-valis-text'
-                      }`}
-                    >
-                      Own calls
-                    </button>
-                    <button
-                      type="button"
-                      aria-pressed={teamCallsAllowed}
-                      onClick={() => {
-                        if (!teamCallsAllowed) {
-                          onSetTeamCallsAllowed(true);
-                        }
-                      }}
-                      className={`text-[11.5px] px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)] border transition-colors cursor-pointer whitespace-nowrap ${
-                        teamCallsAllowed
-                          ? 'bg-valis-text border-valis-text text-valis-canvas font-medium'
-                          : 'border-transparent text-valis-navinactive hover:text-valis-text'
-                      }`}
-                    >
-                      All team calls
-                    </button>
-                  </div>
+                  <ValisSegmentedSwitch
+                    value={teamCallsAllowed ? 'all' : 'own'}
+                    options={[
+                      { value: 'own', label: 'Own calls', activeTone: 'neutral' },
+                      {
+                        value: 'all',
+                        label: 'All team calls',
+                        activeTone: 'elevated',
+                      },
+                    ]}
+                    onChange={(nextVal) =>
+                      onSetTeamCallsAllowed(nextVal === 'all')
+                    }
+                    ariaLabel={`${teamCallsLabel} switch for ${subjectName}`}
+                    testId="drawer-toggle-team-calls"
+                    size="sm"
+                  />
                 )}
               </div>
             )}
@@ -308,50 +316,138 @@ export const SecurityAiChatSandboxDrawer: React.FC<
                   Contract-locked · Zero customer data access
                 </div>
                 <div className="divide-y divide-valis-divider">
-                  {filteredTools.map((tool) => (
-                    <div
-                      key={tool.field}
-                      className="py-2.5 flex items-center justify-between gap-3 opacity-60 select-none"
-                    >
-                      <span className="text-[13.5px] text-valis-muted truncate">
-                        {tool.label}
-                      </span>
-                      <SecurityToolSegmentedSwitch
-                        value="No access"
-                        toolName={tool.label}
-                        subjectName={subjectName}
-                        disabled={true}
-                        disabledReason="Contract-locked · Zero customer data access"
-                        onChange={() => {}}
-                      />
+                  {filteredTools.length === 0 ? (
+                    <div className="py-4 text-[12.5px] text-valis-subtle text-center">
+                      No matching tools
                     </div>
-                  ))}
+                  ) : (
+                    filteredTools.map((tool) => (
+                      <div
+                        key={tool.field}
+                        className="py-2.5 flex items-center justify-between gap-3 opacity-60 select-none"
+                      >
+                        <span className="text-[13.5px] text-valis-muted truncate">
+                          {tool.label}
+                        </span>
+                        <SecurityToolStatusDropdown
+                          value="No access"
+                          toolName={tool.label}
+                          subjectName={subjectName}
+                          disabled={true}
+                          disabledReason="Contract-locked · Zero customer data access"
+                          onChange={() => {}}
+                        />
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-            ) : (
+            ) : trimmedQuery.length > 0 ? (
               <div className="divide-y divide-valis-divider">
-                {filteredTools.map((tool) => (
-                  <div
-                    key={tool.field}
-                    className="py-2.5 flex items-center justify-between gap-3"
-                  >
-                    <span className="text-[13.5px] text-valis-text font-medium truncate">
-                      {tool.label}
-                    </span>
-                    <SecurityToolSegmentedSwitch
-                      value={toolValues[tool.field]}
-                      toolName={tool.label}
-                      subjectName={subjectName}
-                      onChange={(nextOption) =>
-                        onChangeToolPermission(
-                          tool.field,
-                          nextOption,
-                          tool.label
-                        )
-                      }
-                    />
+                {sortedFilteredTools.length === 0 ? (
+                  <div className="py-4 text-[12.5px] text-valis-subtle text-center">
+                    No matching tools
                   </div>
-                ))}
+                ) : (
+                  sortedFilteredTools.map((tool) => {
+                    const isOff = toolValues[tool.field] === 'No access';
+                    return (
+                      <div
+                        key={tool.field}
+                        className="py-2.5 flex items-center justify-between gap-3"
+                      >
+                        <span
+                          className={`text-[13.5px] truncate ${
+                            isOff
+                              ? 'text-valis-muted font-normal'
+                              : 'text-valis-text font-medium'
+                          }`}
+                        >
+                          {tool.label}
+                        </span>
+                        <SecurityToolStatusDropdown
+                          value={toolValues[tool.field]}
+                          toolName={tool.label}
+                          subjectName={subjectName}
+                          onChange={(nextOption) =>
+                            onChangeToolPermission(
+                              tool.field,
+                              nextOption,
+                              tool.label
+                            )
+                          }
+                        />
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            ) : (
+              <div>
+                {sortedActiveTools.length > 0 && (
+                  <div className="divide-y divide-valis-divider">
+                    {sortedActiveTools.map((tool) => (
+                      <div
+                        key={tool.field}
+                        className="py-2.5 flex items-center justify-between gap-3"
+                      >
+                        <span className="text-[13.5px] text-valis-text font-medium truncate">
+                          {tool.label}
+                        </span>
+                        <SecurityToolStatusDropdown
+                          value={toolValues[tool.field]}
+                          toolName={tool.label}
+                          subjectName={subjectName}
+                          onChange={(nextOption) =>
+                            onChangeToolPermission(
+                              tool.field,
+                              nextOption,
+                              tool.label
+                            )
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {offTools.length > 0 && (
+                  <div
+                    className={
+                      sortedActiveTools.length > 0
+                        ? 'mt-2 pt-3 border-t border-valis-sidebarborder'
+                        : 'pt-1'
+                    }
+                  >
+                    <div className="text-[11px] uppercase tracking-[0.06em] font-medium text-valis-subtle mb-1">
+                      Switched off
+                    </div>
+                    <div className="divide-y divide-valis-divider">
+                      {offTools.map((tool) => (
+                        <div
+                          key={tool.field}
+                          className="py-2.5 flex items-center justify-between gap-3"
+                        >
+                          <span className="text-[13.5px] text-valis-muted font-normal truncate">
+                            {tool.label}
+                          </span>
+                          <SecurityToolStatusDropdown
+                            value={toolValues[tool.field]}
+                            toolName={tool.label}
+                            subjectName={subjectName}
+                            onChange={(nextOption) =>
+                              onChangeToolPermission(
+                                tool.field,
+                                nextOption,
+                                tool.label
+                              )
+                            }
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -359,97 +455,151 @@ export const SecurityAiChatSandboxDrawer: React.FC<
       )}
 
       {/* =========================================================
-          TAB 2: Test AI Chat (Full-Height Editorial Chat Thread)
+          TAB 2: Test AI Chat (Centered Zero-State + Glass-Box Editorial Thread)
       ========================================================= */}
       {activeDrawerTab === 'chat' && (
         <>
-          <div
-            ref={chatThreadRef}
-            className="flex-1 overflow-y-auto space-y-3 mb-4 pr-1 min-h-0"
-          >
-            {messages.map((msg) => {
-              if (msg.role === 'system') {
-                return (
-                  <div
-                    key={msg.id}
-                    className="py-2 border-b border-valis-sidebarborder text-[12.5px] text-valis-muted leading-[1.5]"
+          {conversationMessages.length === 0 ? (
+            <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-2 py-4 text-center min-h-0">
+              <div className="w-10 h-10 rounded-[var(--valis-panel-radius)] bg-valis-divider flex items-center justify-center text-valis-text shrink-0">
+                <ValisKnotMark className="w-6 h-6" />
+              </div>
+
+              <h3 className="text-[15px] font-semibold text-valis-text tracking-[-0.015em] mt-3">
+                Test {subjectName} boundary
+              </h3>
+
+              <div className="mt-1.5 text-[11.5px] text-valis-navinactive bg-valis-divider/80 px-2.5 py-0.5 rounded-full tabular-nums">
+                {contractLockedZeroCustomerData
+                  ? `0/${DRAWER_EIGHT_TOOLS.length} tools enabled · 0% call content`
+                  : `${activeToolCount}/${DRAWER_EIGHT_TOOLS.length} tools enabled · ${
+                      teamCallsAllowed ? 'Lead Calls: Active' : 'Own calls only'
+                    }`}
+              </div>
+
+              <div className="w-full mt-5 space-y-2 text-left">
+                {QUICK_TEST_PROMPTS.map((prompt, idx) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    data-testid={`sandbox-quick-prompt-${idx}`}
+                    disabled={isVerifying}
+                    onClick={() => onSendMessage(prompt)}
+                    className="w-full bg-valis-canvas border border-valis-sidebarborder hover:border-valis-text rounded-[var(--valis-card-radius)] px-3.5 py-2.5 flex items-center justify-between gap-2 text-[13px] text-valis-text transition-colors group cursor-pointer text-left disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {msg.text}
-                  </div>
-                );
-              }
-
-              if (msg.role === 'user') {
-                return (
-                  <div key={msg.id} className="flex justify-end">
-                    <div className="max-w-[85%] bg-valis-text text-valis-canvas rounded-[var(--valis-card-radius)] px-3.5 py-2 text-[13px] leading-[1.45]">
-                      {msg.text}
-                    </div>
-                  </div>
-                );
-              }
-
-              const statusColorClass =
-                msg.statusTone === 'allowed'
-                  ? 'text-valis-green'
-                  : msg.statusTone === 'blocked' ||
-                    msg.statusTone === 'firewall'
-                  ? 'text-valis-blockedred'
-                  : 'text-valis-secondary';
-
-              return (
-                <div
-                  key={msg.id}
-                  className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-card-radius)] p-3.5 space-y-1.5"
-                >
-                  {msg.statusLabel && (
-                    <div
-                      className={`text-[12px] font-semibold ${statusColorClass}`}
-                    >
-                      {msg.statusLabel}
-                    </div>
-                  )}
-                  <p className="text-[13.5px] text-valis-text leading-[1.5]">
-                    {msg.text}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 3 Rounded-Full Prompt Chips + Live Chat Input */}
-          <div className="pt-3 border-t border-valis-sidebarborder shrink-0">
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {QUICK_TEST_PROMPTS.map((chip, idx) => (
-                <button
-                  key={chip}
-                  type="button"
-                  data-testid={`sandbox-quick-prompt-${idx}`}
-                  onClick={() => onSendMessage(chip)}
-                  className="text-left text-[12.5px] bg-valis-canvas border border-valis-chromeborder hover:border-valis-text text-valis-secondary hover:text-valis-text rounded-full px-3 py-1 transition-colors cursor-pointer"
-                >
-                  {chip}
-                </button>
-              ))}
+                    <span className="leading-[1.35]">{prompt}</span>
+                    <ArrowUpRight
+                      className="w-[13px] h-[13px] text-valis-subtle group-hover:text-valis-text shrink-0 transition-colors"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                  </button>
+                ))}
+              </div>
             </div>
+          ) : (
+            <div
+              ref={chatThreadRef}
+              className="flex-1 overflow-y-auto space-y-4 pb-4 pr-1 min-h-0"
+            >
+              {conversationMessages.map((msg) => {
+                if (msg.role === 'user') {
+                  return (
+                    <div key={msg.id} className="flex justify-end">
+                      <div className="bg-valis-divider text-valis-text text-[13.5px] leading-[1.5] px-3.5 py-2.5 rounded-[12px] rounded-tr-[4px] max-w-[85%] ml-auto">
+                        {msg.text}
+                      </div>
+                    </div>
+                  );
+                }
 
-            <form onSubmit={handleSubmit} className="flex items-center gap-2">
-              <input
-                type="text"
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder={`Ask Valis Chat as ${subjectName}...`}
-                aria-label={`Ask Valis Chat as ${subjectName}`}
-                className="flex-1 min-w-0 bg-valis-canvas border border-valis-chromeborder focus:border-valis-text rounded-[var(--valis-button-radius)] px-3 py-2 text-[13px] text-valis-text placeholder:text-valis-subtle focus:outline-none"
-              />
-              <button
-                type="submit"
-                aria-label="Send test prompt"
-                className="bg-valis-text hover:bg-valis-texthover text-valis-canvas text-[13px] font-medium px-3.5 py-2 rounded-[var(--valis-button-radius)] shrink-0 transition-colors cursor-pointer"
-              >
-                Send
-              </button>
-            </form>
+                const isAllowed = msg.statusTone === 'allowed';
+                const isFirewall = msg.statusTone === 'firewall';
+                const isBlocked = msg.statusTone === 'blocked';
+
+                return (
+                  <div key={msg.id} className="space-y-1.5 py-1">
+                    <div className="flex items-center gap-1.5 text-[11.5px] font-medium">
+                      {isAllowed ? (
+                        <>
+                          <CheckCircle2
+                            className="w-[13px] h-[13px] text-valis-green shrink-0"
+                            strokeWidth={2}
+                            aria-hidden="true"
+                          />
+                          <span className="text-valis-green">
+                            Allowed · Verified against scope
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldAlert
+                            className="w-[13px] h-[13px] text-valis-blockedred shrink-0"
+                            strokeWidth={2}
+                            aria-hidden="true"
+                          />
+                          <span className="text-valis-blockedred">
+                            {isFirewall
+                              ? 'Blocked · Second Brain Firewall'
+                              : 'Blocked · Restricted by policy'}
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    <p className="text-[13.5px] leading-[1.55] text-valis-text">
+                      {msg.text}
+                    </p>
+
+                    <div className="pt-1 flex items-center justify-between text-[11.5px]">
+                      {isAllowed ? (
+                        <span className="text-valis-subtle underline decoration-valis-underline underline-offset-2">
+                          Source: {msg.sourceCitation ?? 'Workspace OrgBrain'}
+                        </span>
+                      ) : isBlocked ? (
+                        <button
+                          type="button"
+                          onClick={() => onSelectDrawerTab('configure')}
+                          className="text-valis-blue hover:underline font-medium cursor-pointer transition-colors"
+                        >
+                          Adjust in Permissions →
+                        </button>
+                      ) : (
+                        <span className="text-valis-subtle">
+                          Hardware-isolated · Cannot be overridden
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {isVerifying && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="py-1 text-[12px] text-valis-subtle animate-pulse"
+                >
+                  Checking {subjectName} policy &amp; connectors...
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Unified Floating Composer */}
+          <div className="pt-2 shrink-0">
+            <ValisChatComposer
+              value={inputValue}
+              onChange={setInputValue}
+              onSubmit={handleSubmitPrompt}
+              placeholder={`Ask Valis Chat as ${subjectName}...`}
+              ariaLabel={`Ask Valis Chat as ${subjectName}`}
+              scopeLabel={subjectName}
+              showClear={conversationMessages.length > 0}
+              onClear={onClearMessages}
+              isSubmitting={isVerifying}
+              submitAriaLabel="Send test prompt"
+            />
           </div>
         </>
       )}

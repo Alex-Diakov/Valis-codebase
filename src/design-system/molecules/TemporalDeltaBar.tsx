@@ -38,7 +38,7 @@ export const TemporalDeltaBar: React.FC<TemporalDeltaBarProps> = ({
   return (
     <div className="inline-flex flex-wrap items-center">
       {showOnlyChanges ? (
-        <div className="bg-valis-text text-valis-canvas border border-valis-text font-medium text-[12.5px] px-2.5 py-0.5 rounded-[5px] inline-flex items-center gap-1.5">
+        <div className="bg-valis-text text-valis-canvas border border-valis-text font-medium text-[12.5px] px-2.5 py-0.5 rounded-[var(--valis-control-radius)] inline-flex items-center gap-1.5">
           <span>
             Filtering {unseenChangesCount} {updateWord}
           </span>
@@ -47,7 +47,7 @@ export const TemporalDeltaBar: React.FC<TemporalDeltaBarProps> = ({
             onClick={onToggleShowOnlyChanges}
             aria-label="Clear changes filter"
             title="Clear filter"
-            className="p-1 -mr-1 rounded hover:bg-valis-canvas/20 transition-colors cursor-pointer flex items-center justify-center"
+            className="p-1 -mr-1 rounded-[var(--valis-checkbox-radius)] hover:bg-valis-canvas/20 transition-colors cursor-pointer flex items-center justify-center"
           >
             <X className="w-3 h-3" strokeWidth={2.25} />
           </button>
@@ -56,7 +56,7 @@ export const TemporalDeltaBar: React.FC<TemporalDeltaBarProps> = ({
         <button
           type="button"
           onClick={onToggleShowOnlyChanges}
-          className="bg-valis-bg hover:bg-valis-chrome border border-valis-controlborder text-valis-text text-[12.5px] px-2.5 py-0.5 rounded-[5px] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          className="bg-valis-bg hover:bg-valis-chrome border border-valis-controlborder text-valis-text text-[12.5px] px-2.5 py-0.5 rounded-[var(--valis-control-radius)] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
         >
           <ListFilter
             className="w-[12.5px] h-[12.5px] text-valis-orange shrink-0"

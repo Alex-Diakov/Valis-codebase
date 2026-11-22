@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import {
   AdminNavId,
   AuditLogEvent,
@@ -21,7 +22,9 @@ import {
   SecurityDrawerTabId,
   SecurityDrawerToolValues,
   SecurityToolFieldKey,
-} from '../design-system/molecules/SecurityAiChatSandboxDrawer';
+  ValisButton,
+  ValisSegmentedSwitch,
+} from '../design-system';
 
 interface AiSecurityViewProps {
   columns?: SecurityColumn[];
@@ -419,10 +422,31 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
   const [sandboxMessagesBySubject, setSandboxMessagesBySubject] = useState<
     Record<string, SecuritySandboxChatMessage[]>
   >({});
+  const [verifyingSubjectId, setVerifyingSubjectId] = useState<string | null>(
+    null
+  );
+  const verifyTimerRef = useRef<number | null>(null);
+
+  const cancelPendingVerification = () => {
+    if (verifyTimerRef.current !== null) {
+      window.clearTimeout(verifyTimerRef.current);
+      verifyTimerRef.current = null;
+    }
+    setVerifyingSubjectId(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (verifyTimerRef.current !== null) {
+        window.clearTimeout(verifyTimerRef.current);
+      }
+    };
+  }, []);
 
   // Auto-close right drawer when switching to `Audit log`
   useEffect(() => {
     if (activeSecurityTab === 'Audit log') {
+      cancelPendingVerification();
       setSandboxSubjectId(null);
     }
   }, [activeSecurityTab]);
@@ -534,24 +558,11 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
     subjectId: string,
     initialTab: SecurityDrawerTabId = 'configure'
   ) => {
+    if (sandboxSubjectId !== subjectId) {
+      cancelPendingVerification();
+    }
     setSandboxSubjectId(subjectId);
     setActiveDrawerTab(initialTab);
-    setSandboxMessagesBySubject((prev) => {
-      if (prev[subjectId] && prev[subjectId].length > 0) {
-        return prev;
-      }
-      const display = getSubjectDisplay(subjectId);
-      return {
-        ...prev,
-        [subjectId]: [
-          {
-            id: `sys-${subjectId}`,
-            role: 'system',
-            text: `Testing Valis Chat as ${display.name}. Choose a prompt below or type a question to verify their live permission boundary.`,
-          },
-        ],
-      };
-    });
   };
 
   // Update one of the 8 tool permissions from the Slide-Over Drawer
@@ -635,13 +646,14 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
     setAuditTrail((prev) => [entry, ...prev]);
   };
 
-  // Send a prompt inside the Slide-Over Drawer's Test AI Chat tab
+  // Send a prompt inside the Slide-Over Drawer's Test AI Chat tab (350ms glass-box verification)
   const handleSendSandboxMessage = (promptText: string) => {
     if (!sandboxSubjectId) return;
+    const targetSubjectId = sandboxSubjectId;
 
     const evaluation = evaluateSecuritySandboxPrompt(
       promptText,
-      sandboxSubjectId,
+      targetSubjectId,
       teamRules,
       meetingRows
     );
@@ -658,14 +670,34 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
       text: evaluation.replyText,
       statusLabel: evaluation.statusLabel,
       statusTone: evaluation.statusTone,
+      sourceCitation: evaluation.sourceCitation,
     };
+
+    cancelPendingVerification();
 
     setSandboxMessagesBySubject((prev) => ({
       ...prev,
-      [sandboxSubjectId]: [...(prev[sandboxSubjectId] ?? []), userMsg, aiMsg],
+      [targetSubjectId]: [...(prev[targetSubjectId] ?? []), userMsg],
     }));
 
-    setAuditTrail((prev) => [evaluation.auditEntry, ...prev]);
+    setVerifyingSubjectId(targetSubjectId);
+    verifyTimerRef.current = window.setTimeout(() => {
+      verifyTimerRef.current = null;
+      setSandboxMessagesBySubject((prev) => ({
+        ...prev,
+        [targetSubjectId]: [...(prev[targetSubjectId] ?? []), aiMsg],
+      }));
+      setAuditTrail((prev) => [evaluation.auditEntry, ...prev]);
+      setVerifyingSubjectId((curr) => (curr === targetSubjectId ? null : curr));
+    }, 350);
+  };
+
+  const handleClearSandboxMessages = (subjectId: string) => {
+    cancelPendingVerification();
+    setSandboxMessagesBySubject((prev) => ({
+      ...prev,
+      [subjectId]: [],
+    }));
   };
 
   const filteredAuditTrail =
@@ -673,7 +705,7 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
       ? auditTrail
       : auditTrail.filter((entry) => entry.filterCategory === auditFilter);
 
-  // Clean editorial Enabled Tools text for View 1 (AI access) — NO rainbow boxes!
+  // Clean editorial Enabled Tools text for View 1 (AI access) — typographic emphasis, NO color boxes
   const renderEditorialEnabledTools = (rule: SecurityTeamToolRule) => {
     if (rule.subjectId === 'subj-valis') {
       return (
@@ -692,20 +724,30 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
     const activeTools = allEight.filter((t) => t.value !== 'No access');
     const blockedCount = allEight.length - activeTools.length;
 
-    const activeText =
-      activeTools.length > 0
-        ? activeTools
-            .map((t) =>
-              t.value === 'Edit (Approve)'
-                ? `${t.shortLabel} (Edit)`
-                : t.shortLabel
-            )
-            .join(', ')
-        : 'No tools enabled';
-
     return (
       <div className="text-[13.5px] leading-[1.45]">
-        <span className="text-valis-text">{activeText}</span>
+        {activeTools.length === 0 ? (
+          <span className="text-valis-subtle">No tools enabled</span>
+        ) : (
+          activeTools.map((tool, index) => {
+            const isEdit = tool.value === 'Edit (Approve)';
+            return (
+              <React.Fragment key={tool.shortLabel}>
+                {index > 0 && <span className="text-valis-subtle">, </span>}
+                {isEdit ? (
+                  <span className="text-valis-text font-medium">
+                    {tool.shortLabel}{' '}
+                    <span className="text-valis-green font-medium">(Edit)</span>
+                  </span>
+                ) : (
+                  <span className="text-valis-secondary font-normal">
+                    {tool.shortLabel}
+                  </span>
+                )}
+              </React.Fragment>
+            );
+          })
+        )}
         {blockedCount > 0 && (
           <span className="text-valis-subtle ml-1.5">
             · {blockedCount} blocked
@@ -736,7 +778,7 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
           {activeSecurityTab === 'AI access' && (
             <div>
               {/* Header row */}
-              <div className="flex justify-between items-baseline gap-4 mb-6">
+              <div className="flex justify-between items-center gap-4 mb-6">
                 <div>
                   <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                     AI &amp; Tool Access
@@ -748,29 +790,33 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
 
                 <div
                   data-testid="sso-directory-sync-badge"
-                  className="text-[12.5px] text-valis-subtle shrink-0 whitespace-nowrap"
+                  className="bg-valis-canvas border border-valis-chromeborder rounded-full px-3 py-1 text-[12px] text-valis-secondary inline-flex items-center gap-2 shrink-0 whitespace-nowrap"
                 >
-                  Synced via Google Workspace SSO · 4 Departments · 80 Employees
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-valis-green shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>Google Workspace SSO · 80 users</span>
                 </div>
               </div>
 
-              {/* Single Clean Table (border border-valis-sidebarborder rounded-[8px] bg-valis-canvas) */}
-              <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-card-radius)] px-5 py-2">
+              {/* Unified Full-Bleed Table Card */}
+              <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] overflow-hidden p-0">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-valis-divider text-[12.5px] font-semibold text-valis-text">
-                      <th className="w-[28%] py-3 pr-4 font-semibold">
+                      <th className="w-[28%] py-3.5 pl-6 pr-4 font-semibold">
                         Department
                       </th>
-                      <th className="w-[58%] py-3 px-4 font-semibold">
+                      <th className="w-[58%] py-3.5 px-4 font-semibold">
                         Enabled Tools
                       </th>
-                      <th className="w-[14%] py-3 pl-4 text-right font-semibold">
+                      <th className="w-[14%] py-3.5 pl-4 pr-6 text-right font-semibold">
                         Action
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-valis-divider text-[14px]">
+                  <tbody className="divide-y divide-valis-divider text-[13.5px]">
                     {teamRules.map((rule) => {
                       const isSelected = sandboxSubjectId === rule.subjectId;
                       return (
@@ -779,12 +825,12 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
                           onClick={() =>
                             handleOpenSandbox(rule.subjectId, 'configure')
                           }
-                          className={`transition-colors cursor-pointer ${
+                          className={`group transition-colors cursor-pointer ${
                             isSelected ? 'bg-valis-bg' : 'hover:bg-valis-bg'
                           }`}
                         >
-                          <td className="py-3.5 pr-4 align-middle">
-                            <div className="font-medium text-valis-text">
+                          <td className="py-3.5 pl-6 pr-4 align-middle">
+                            <div className="text-[14px] font-medium text-valis-text">
                               {rule.teamName}
                             </div>
                             <div className="text-[12.5px] text-valis-muted">
@@ -794,16 +840,21 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
                           <td className="py-3.5 px-4 align-middle">
                             {renderEditorialEnabledTools(rule)}
                           </td>
-                          <td className="py-3.5 pl-4 text-right align-middle whitespace-nowrap">
+                          <td className="py-3.5 pl-4 pr-6 text-right align-middle whitespace-nowrap">
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenSandbox(rule.subjectId, 'configure');
                               }}
-                              className="text-valis-blue hover:underline text-[13px] font-medium cursor-pointer"
+                              className="text-[13px] text-valis-navinactive group-hover:text-valis-text font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
                             >
-                              Manage
+                              <span>Manage</span>
+                              <ChevronRight
+                                className="w-[14px] h-[14px] transition-transform duration-150 group-hover:translate-x-0.5"
+                                strokeWidth={1.75}
+                                aria-hidden="true"
+                              />
                             </button>
                           </td>
                         </tr>
@@ -821,7 +872,7 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
           {activeSecurityTab === 'Meeting permissions' && (
             <div>
               {/* Header row */}
-              <div className="flex justify-between items-baseline gap-4 mb-6">
+              <div className="flex justify-between items-center gap-4 mb-6">
                 <div>
                   <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                     Meeting &amp; Voice Note Permissions
@@ -833,32 +884,36 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
 
                 <div
                   data-testid="sso-directory-sync-badge-meetings"
-                  className="text-[12.5px] text-valis-subtle shrink-0 whitespace-nowrap"
+                  className="bg-valis-canvas border border-valis-chromeborder rounded-full px-3 py-1 text-[12px] text-valis-secondary inline-flex items-center gap-2 shrink-0 whitespace-nowrap"
                 >
-                  Synced via Google Workspace SSO · 4 Departments · 80 Employees
+                  <span
+                    className="w-1.5 h-1.5 rounded-full bg-valis-green shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>Google Workspace SSO · 80 users</span>
                 </div>
               </div>
 
-              {/* Single Clean 4-Column Table: Department | Team Lead | Lead Call Access | Action */}
-              <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-card-radius)] px-5 py-2">
+              {/* Unified Full-Bleed 4-Column Table: Department | Team Lead | Lead Call Access | Action */}
+              <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] overflow-hidden p-0">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-valis-divider text-[12.5px] font-semibold text-valis-text">
-                      <th className="w-[26%] py-3 pr-4 font-semibold">
+                      <th className="w-[26%] py-3.5 pl-6 pr-4 font-semibold">
                         Department
                       </th>
-                      <th className="w-[28%] py-3 px-4 font-semibold">
+                      <th className="w-[28%] py-3.5 px-4 font-semibold">
                         Team Lead
                       </th>
-                      <th className="w-[32%] py-3 px-4 font-semibold">
+                      <th className="w-[32%] py-3.5 px-4 font-semibold">
                         Lead Call Access
                       </th>
-                      <th className="w-[14%] py-3 pl-4 text-right font-semibold">
+                      <th className="w-[14%] py-3.5 pl-4 pr-6 text-right font-semibold">
                         Action
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-valis-divider text-[14px]">
+                  <tbody className="divide-y divide-valis-divider text-[13.5px]">
                     {meetingRows.map((row) => {
                       const isSelected = sandboxSubjectId === row.subjectId;
                       const isContractLocked = row.teamCallsMode === 'blocked';
@@ -869,13 +924,13 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
                         <tr
                           key={row.id}
                           onClick={() => handleOpenSandbox(row.subjectId, 'chat')}
-                          className={`transition-colors cursor-pointer ${
+                          className={`group transition-colors cursor-pointer ${
                             isSelected ? 'bg-valis-bg' : 'hover:bg-valis-bg'
                           }`}
                         >
                           {/* Column 1: Department */}
-                          <td className="py-3.5 pr-4 align-middle">
-                            <div className="font-medium text-valis-text">
+                          <td className="py-3.5 pl-6 pr-4 align-middle">
+                            <div className="text-[14px] font-medium text-valis-text">
                               {row.departmentName ?? row.personName}
                             </div>
                             <div className="text-[12.5px] text-valis-muted">
@@ -898,64 +953,48 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
                                 0% call content (Telemetry only)
                               </span>
                             ) : (
-                              <div
-                                role="group"
-                                aria-label={`Lead Call Access switch for ${row.personName}`}
-                                className="inline-flex items-center bg-valis-divider border border-valis-chromeborder rounded-[5px] p-0.5"
-                              >
-                                <button
-                                  type="button"
-                                  aria-pressed={!row.teamCallsAllowed}
-                                  onClick={() => {
-                                    if (row.teamCallsAllowed) {
-                                      handleSetSubjectMeetingGrant(
-                                        row.subjectId,
-                                        false
-                                      );
-                                    }
-                                  }}
-                                  className={`text-[12px] px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)] border transition-colors cursor-pointer whitespace-nowrap ${
-                                    !row.teamCallsAllowed
-                                      ? 'bg-valis-canvas border-valis-controlborder text-valis-text font-medium'
-                                      : 'border-transparent text-valis-navinactive hover:text-valis-text'
-                                  }`}
-                                >
-                                  Own calls
-                                </button>
-                                <button
-                                  type="button"
-                                  aria-pressed={row.teamCallsAllowed}
-                                  onClick={() => {
-                                    if (!row.teamCallsAllowed) {
-                                      handleSetSubjectMeetingGrant(
-                                        row.subjectId,
-                                        true
-                                      );
-                                    }
-                                  }}
-                                  className={`text-[12px] px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)] border transition-colors cursor-pointer whitespace-nowrap ${
-                                    row.teamCallsAllowed
-                                      ? 'bg-valis-text border-valis-text text-valis-canvas font-medium'
-                                      : 'border-transparent text-valis-navinactive hover:text-valis-text'
-                                  }`}
-                                >
-                                  {scopeLabel}
-                                </button>
-                              </div>
+                              <ValisSegmentedSwitch
+                                value={row.teamCallsAllowed ? 'all' : 'own'}
+                                options={[
+                                  {
+                                    value: 'own',
+                                    label: 'Own calls',
+                                    activeTone: 'neutral',
+                                  },
+                                  {
+                                    value: 'all',
+                                    label: scopeLabel,
+                                    activeTone: 'elevated',
+                                  },
+                                ]}
+                                onChange={(nextVal) =>
+                                  handleSetSubjectMeetingGrant(
+                                    row.subjectId,
+                                    nextVal === 'all'
+                                  )
+                                }
+                                ariaLabel={`Lead Call Access switch for ${row.personName}`}
+                                size="md"
+                              />
                             )}
                           </td>
 
-                          {/* Column 4: Action (Blue link "Test AI") */}
-                          <td className="py-3.5 pl-4 text-right align-middle whitespace-nowrap">
+                          {/* Column 4: Action (Subtle monochrome Linear-style Test AI + ChevronRight) */}
+                          <td className="py-3.5 pl-4 pr-6 text-right align-middle whitespace-nowrap">
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleOpenSandbox(row.subjectId, 'chat');
                               }}
-                              className="text-valis-blue hover:underline text-[13px] font-medium cursor-pointer"
+                              className="text-[13px] text-valis-navinactive group-hover:text-valis-text font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
                             >
-                              Test AI
+                              <span>Test AI</span>
+                              <ChevronRight
+                                className="w-[14px] h-[14px] transition-transform duration-150 group-hover:translate-x-0.5"
+                                strokeWidth={1.75}
+                                aria-hidden="true"
+                              />
                             </button>
                           </td>
                         </tr>
@@ -990,44 +1029,40 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
                 {AUDIT_FILTER_CATEGORIES.map((category) => {
                   const isActive = auditFilter === category;
                   return (
-                    <button
+                    <ValisButton
                       key={category}
-                      type="button"
+                      variant="pill"
                       role="tab"
                       aria-selected={isActive}
+                      active={isActive}
                       onClick={() => setAuditFilter(category)}
-                      className={`rounded-full px-3.5 py-1 text-[12.5px] transition-colors cursor-pointer ${
-                        isActive
-                          ? 'bg-valis-text text-valis-canvas font-medium'
-                          : 'bg-valis-canvas border border-valis-chromeborder text-valis-muted hover:text-valis-text'
-                      }`}
                     >
                       {category}
-                    </button>
+                    </ValisButton>
                   );
                 })}
               </div>
 
-              {/* Clean 4-column table: Time | Person or AI | Event | Status */}
-              <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-card-radius)] px-5 py-2">
+              {/* Unified Full-Bleed 4-Column Table: Time | Person or AI | Event | Status */}
+              <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] overflow-hidden p-0">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-valis-divider text-[12.5px] font-semibold text-valis-text">
-                      <th className="py-3 pr-4 font-semibold">Time</th>
-                      <th className="py-3 px-4 font-semibold">Person or AI</th>
-                      <th className="py-3 px-4 font-semibold">Event</th>
-                      <th className="py-3 pl-4 text-right font-semibold">
+                      <th className="py-3.5 pl-6 pr-4 font-semibold">Time</th>
+                      <th className="py-3.5 px-4 font-semibold">Person or AI</th>
+                      <th className="py-3.5 px-4 font-semibold">Event</th>
+                      <th className="py-3.5 pl-4 pr-6 text-right font-semibold">
                         Status
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-valis-divider text-[14px]">
+                  <tbody className="divide-y divide-valis-divider text-[13.5px]">
                     {filteredAuditTrail.map((entry) => (
                       <tr
                         key={entry.id}
                         className="hover:bg-valis-bg transition-colors"
                       >
-                        <td className="py-3.5 pr-4 text-[12.5px] text-valis-muted tabular-nums whitespace-nowrap">
+                        <td className="py-3.5 pl-6 pr-4 text-[12.5px] text-valis-muted tabular-nums whitespace-nowrap">
                           {entry.timestamp}
                         </td>
                         <td className="py-3.5 px-4 font-medium text-valis-text whitespace-nowrap">
@@ -1036,7 +1071,7 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
                         <td className="py-3.5 px-4 text-[13.5px] text-valis-secondary">
                           {entry.actionScope}
                         </td>
-                        <td className="py-3.5 pl-4 text-right text-[12.5px] text-valis-muted whitespace-nowrap">
+                        <td className="py-3.5 pl-4 pr-6 text-right text-[12.5px] text-valis-muted whitespace-nowrap">
                           {entry.guardrailCheck}
                         </td>
                       </tr>
@@ -1086,8 +1121,15 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
               )
             }
             messages={sandboxMessagesBySubject[sandboxSubjectId] ?? []}
+            isVerifying={verifyingSubjectId === sandboxSubjectId}
             onSendMessage={handleSendSandboxMessage}
-            onClose={() => setSandboxSubjectId(null)}
+            onClearMessages={() =>
+              handleClearSandboxMessages(sandboxSubjectId)
+            }
+            onClose={() => {
+              cancelPendingVerification();
+              setSandboxSubjectId(null);
+            }}
           />
         )}
     </div>

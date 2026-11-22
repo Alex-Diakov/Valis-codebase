@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Home,
   Calendar,
@@ -8,6 +8,8 @@ import {
   Users,
   Settings,
   ExternalLink,
+  ArrowUpRight,
+  CheckCircle2,
 } from 'lucide-react';
 import {
   BriefTaskItem as BriefTaskItemType,
@@ -19,13 +21,20 @@ import {
   TaskResolutionState,
   UxVersionMode,
 } from '../types/valis';
-import { VALIS_TOKENS } from '../design-system/tokens';
-import { CallListenerBanner } from '../design-system/molecules/CallListenerBanner';
-import { BriefTaskItem } from '../design-system/molecules/BriefTaskItem';
-import { ScopeSegmentedControl } from '../design-system/molecules/ScopeSegmentedControl';
-import { TemporalDeltaBar } from '../design-system/molecules/TemporalDeltaBar';
-import { ProfileSwitcherFooter } from '../design-system/molecules/ProfileSwitcherFooter';
-import { ValisDrawer } from '../design-system/molecules/ValisDrawer';
+import {
+  VALIS_TOKENS,
+  ValisButton,
+  ValisToggle,
+  SourceCitationLink,
+  CallListenerBanner,
+  BriefTaskItem,
+  ScopeSegmentedControl,
+  TemporalDeltaBar,
+  ProfileSwitcherFooter,
+  ValisChatComposer,
+  ValisKnotMark,
+  ValisDrawer,
+} from '../design-system';
 
 interface ValisAppViewProps {
   activeNav: EmployeeNavId;
@@ -62,25 +71,6 @@ const BRIEF_SECTIONS: BriefSectionName[] = [
   'Others owe',
   'Signals',
 ];
-
-const ValisToggleSwitch: React.FC<{
-  checked: boolean;
-  onChange: () => void;
-  ariaLabel: string;
-}> = ({ checked, onChange, ariaLabel }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    aria-label={ariaLabel}
-    onClick={onChange}
-    className={`w-[36px] h-[20px] rounded-full p-[2px] transition-colors flex items-center cursor-pointer shrink-0 ${
-      checked ? 'bg-valis-text justify-end' : 'bg-valis-dots justify-start'
-    }`}
-  >
-    <span className="w-[16px] h-[16px] rounded-full bg-valis-canvas shadow-2xs block" />
-  </button>
-);
 
 const AvatarStack: React.FC<{
   avatars: { initials: string; bg: string; text?: string }[];
@@ -153,12 +143,34 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
 
   // Calendar state
   const [inviteAllBots, setInviteAllBots] = useState(true);
+  const [isSyncingCalendar, setIsSyncingCalendar] = useState(false);
+  const [calendarSyncedAt, setCalendarSyncedAt] = useState('Synced 09:40');
   const [meetingToggles, setMeetingToggles] = useState<Record<string, boolean>>({
     'm-1': true,
     'm-2': true,
     'm-3': true,
     'm-4': true,
   });
+
+  const handleSyncCalendar = () => {
+    if (isSyncingCalendar) return;
+    setIsSyncingCalendar(true);
+    window.setTimeout(() => {
+      setIsSyncingCalendar(false);
+      setCalendarSyncedAt('Synced just now');
+    }, 350);
+  };
+
+  const handleToggleMasterBots = () => {
+    const nextVal = !inviteAllBots;
+    setInviteAllBots(nextVal);
+    setMeetingToggles({
+      'm-1': nextVal,
+      'm-2': nextVal,
+      'm-3': nextVal,
+      'm-4': nextVal,
+    });
+  };
 
   // Library state
   const [libraryTab, setLibraryTab] = useState<
@@ -168,8 +180,25 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
   // Chat state
   const [chatQuery, setChatQuery] = useState('');
   const [chatHistory, setChatHistory] = useState<
-    { role: 'user' | 'valis'; text: string; citation?: string }[]
+    { role: 'user' | 'valis'; text: string; source?: SourceLink }[]
   >([]);
+  const [isVerifyingChat, setIsVerifyingChat] = useState(false);
+  const chatVerifyTimerRef = useRef<number | null>(null);
+  const chatScrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (chatVerifyTimerRef.current !== null) {
+        window.clearTimeout(chatVerifyTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (chatScrollRef.current) {
+      chatScrollRef.current.scrollTop = chatScrollRef.current.scrollHeight;
+    }
+  }, [chatHistory.length, isVerifyingChat]);
 
   const isV2 = uxMode === 'v2-improvements';
 
@@ -200,31 +229,72 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
     if (!trimmed) return;
     let answer =
       'Searched across your meetings, messages, and documents in the demo company.';
-    let citation = 'Workspace index · Mon 16 Nov';
+    let source: SourceLink = {
+      label: 'Workspace index · Mon 16 Nov',
+      type: 'notes',
+      previewTitle: 'Workspace Memory Index · Demo company',
+      previewMeta: 'OrgBrain · Mon 16 Nov · 07:00',
+      previewBody:
+        'Verified across attended meetings, Slack channels, and Jira issues within your SSO scope.',
+    };
     if (trimmed.toLowerCase().includes('pricing')) {
       answer =
         'In the Thursday 12 Nov Pricing review (11:00 · 50min), the team decided the annual discount will be tested with new customers only. Tom Becker is drafting the price page changes.';
-      citation = 'Pricing review · Thursday, 12 November';
+      source = {
+        label: 'Pricing review · Thu 12 Nov',
+        type: 'notes',
+        previewTitle: 'Pricing review (Google Meet)',
+        previewMeta: 'Thursday, 12 November · 11:00 · 50min',
+        previewBody:
+          'Decision: Annual discount will be tested with new customers only. Tom Becker drafts the price page changes before Tuesday.',
+      };
     } else if (trimmed.toLowerCase().includes('support hiring')) {
       answer =
         'In Wednesday 11 Nov Support hiring plan (14:30 · 30min), Maria Lopez proposed two new support roles to bring the backlog down. The plan is waiting for contract review merge approval first.';
-      citation = 'Support hiring plan · Wednesday, 11 November';
+      source = {
+        label: 'Support hiring plan · Wed 11 Nov',
+        type: 'notes',
+        previewTitle: 'Support hiring plan (Microsoft Teams)',
+        previewMeta: 'Wednesday, 11 November · 14:30 · 30min',
+        previewBody:
+          'Maria Lopez proposed two new support roles to reduce queue age. Dependent on merging duplicate contract review intake.',
+      };
     } else if (trimmed.toLowerCase().includes('others owe')) {
       answer =
         'Daniel Kim owes the Renewal risk view (waiting since Tue 10 Nov, tracked in Jira OPS-142 and Slack #finance).';
-      citation = 'Jira OPS-142 · Slack #finance';
+      source = {
+        label: 'Jira OPS-142 · Slack #finance',
+        type: 'jira',
+        previewTitle: 'OPS-142 · Consolidated Q4 Renewal Risk View',
+        previewMeta: 'Jira · Assigned to Daniel Kim · Overdue since Tue 10 Nov',
+        previewBody:
+          'Consolidate enterprise renewal exposure and custom SLA indemnity flags ahead of the Q4 board pack.',
+      };
     }
-    setChatHistory((prev) => [
-      ...prev,
-      { role: 'user', text: trimmed },
-      { role: 'valis', text: answer, citation },
-    ]);
+    if (chatVerifyTimerRef.current !== null) {
+      window.clearTimeout(chatVerifyTimerRef.current);
+      chatVerifyTimerRef.current = null;
+    }
+    setChatHistory((prev) => [...prev, { role: 'user', text: trimmed }]);
     setChatQuery('');
+    setIsVerifyingChat(true);
+    chatVerifyTimerRef.current = window.setTimeout(() => {
+      chatVerifyTimerRef.current = null;
+      setChatHistory((prev) => [
+        ...prev,
+        { role: 'valis', text: answer, source },
+      ]);
+      setIsVerifyingChat(false);
+    }, 350);
   };
 
-  const handleSendChat = (e: React.FormEvent) => {
-    e.preventDefault();
-    askQuestionInChat(chatQuery);
+  const handleClearChat = () => {
+    if (chatVerifyTimerRef.current !== null) {
+      window.clearTimeout(chatVerifyTimerRef.current);
+      chatVerifyTimerRef.current = null;
+    }
+    setIsVerifyingChat(false);
+    setChatHistory([]);
   };
 
   // Track which section's multi-hidden tray is expanded
@@ -477,7 +547,7 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
       {activeNav === 'Calendar' && (
         <div className="w-full flex flex-col">
           {/* Top Header Area */}
-          <div className="pb-4 border-b border-valis-sidebarborder flex items-start justify-between">
+          <div className="pb-4 border-b border-valis-sidebarborder flex items-start justify-between gap-4">
             <div>
               <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                 Calendar
@@ -486,12 +556,19 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                 View and refresh your upcoming meetings
               </p>
             </div>
-            <button
-              type="button"
-              className="bg-valis-canvas border border-valis-controlborder hover:border-valis-text hover:bg-valis-bg text-valis-text text-[12.5px] font-medium px-3.5 py-1.5 rounded-[var(--valis-button-radius)] transition-colors cursor-pointer"
-            >
-              Sync
-            </button>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-[12.5px] text-valis-subtle tabular-nums">
+                {calendarSyncedAt}
+              </span>
+              <ValisButton
+                variant="secondary"
+                size="md"
+                onClick={handleSyncCalendar}
+                disabled={isSyncingCalendar}
+              >
+                {isSyncingCalendar ? 'Syncing...' : 'Sync'}
+              </ValisButton>
+            </div>
           </div>
 
           <div className="py-4 space-y-4">
@@ -505,26 +582,38 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                   Valis automatically sends a bot to your upcoming meetings, even when the app is closed.
                 </div>
               </div>
-              <ValisToggleSwitch
+              <ValisToggle
                 checked={inviteAllBots}
-                onChange={() => setInviteAllBots((v) => !v)}
+                onChange={handleToggleMasterBots}
                 ariaLabel="Invite bots to all my meetings"
               />
             </div>
 
             {/* Monday, 16 November */}
             <div>
-              <h3 className="text-[13px] font-semibold text-valis-navinactive mb-2.5">
+              <h3 className="text-[14px] font-semibold text-valis-text mb-2.5">
                 Monday, 16 November
               </h3>
               <div className="space-y-2.5">
                 {/* Meeting 1 */}
-                <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] px-4 py-3.5 flex items-center justify-between gap-3">
+                <div
+                  onClick={() =>
+                    handleSelectSourceExclusive({
+                      label: 'Calendar · Mon 10:00',
+                      type: 'calendar',
+                      previewTitle: 'Quarterly planning with Sales',
+                      previewMeta: 'Monday, 16 November · 10:00–11:00 · Google Calendar',
+                      previewBody:
+                        'Review Q4 renewal pricing options, annual discount test scope, and Sales pipeline forecast with Tom Becker, Maria Lopez, and Daniel Kim.',
+                    })
+                  }
+                  className="bg-valis-canvas border border-valis-sidebarborder hover:border-valis-controlhover rounded-[var(--valis-panel-radius)] px-4 py-3.5 flex items-center justify-between gap-3 transition-colors cursor-pointer"
+                >
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 text-[13.5px] tabular-nums">
                       <span className="font-semibold text-valis-text">10:00</span>
                       <span className="text-valis-muted">- 11:00</span>
-                      <span className="text-valis-muted ml-1 text-[12.5px]">● Next</span>
+                      <span className="text-valis-muted ml-1 text-[12.5px]">· Next</span>
                     </div>
                     <div className="mt-1 flex items-center gap-1.5 text-[14px] font-semibold text-valis-text">
                       <span className="truncate">Quarterly planning with Sales</span>
@@ -532,7 +621,10 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 shrink-0">
+                  <div
+                    className="flex items-center gap-2.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <span className="text-[12.5px] text-valis-muted">Invitees</span>
                     <AvatarStack
                       avatars={[
@@ -543,13 +635,13 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                         { initials: '+2', bg: rowDivider, text: textSecondary },
                       ]}
                     />
-                    <span className="bg-valis-divider text-valis-secondary text-[12px] font-medium px-2.5 py-1 rounded-[5px]">
-                      Bot invited
+                    <span className="bg-valis-divider text-valis-secondary text-[12px] font-medium px-2.5 py-1 rounded-[var(--valis-checkbox-radius)]">
+                      {meetingToggles['m-1'] ? 'Bot invited' : 'Bot paused'}
                     </span>
                     <span className="text-[12.5px] text-valis-muted">
                       Joins automatically
                     </span>
-                    <ValisToggleSwitch
+                    <ValisToggle
                       checked={meetingToggles['m-1']}
                       onChange={() =>
                         setMeetingToggles((p) => ({ ...p, 'm-1': !p['m-1'] }))
@@ -560,7 +652,19 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                 </div>
 
                 {/* Meeting 2 */}
-                <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] px-4 py-3.5 flex items-center justify-between gap-3">
+                <div
+                  onClick={() =>
+                    handleSelectSourceExclusive({
+                      label: 'Calendar · Mon 12:30',
+                      type: 'calendar',
+                      previewTitle: '1:1 with Maria Lopez',
+                      previewMeta: 'Monday, 16 November · 12:30–13:00 · Google Calendar',
+                      previewBody:
+                        'Align on Support Ops backlog reduction, Deal Desk contract intake merge, and two proposed support hiring requisitions.',
+                    })
+                  }
+                  className="bg-valis-canvas border border-valis-sidebarborder hover:border-valis-controlhover rounded-[var(--valis-panel-radius)] px-4 py-3.5 flex items-center justify-between gap-3 transition-colors cursor-pointer"
+                >
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 text-[13.5px] tabular-nums">
                       <span className="font-semibold text-valis-text">12:30</span>
@@ -572,7 +676,10 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 shrink-0">
+                  <div
+                    className="flex items-center gap-2.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <span className="text-[12.5px] text-valis-muted">Invitees</span>
                     <AvatarStack
                       avatars={[
@@ -580,13 +687,13 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                         { initials: 'ML', bg: avatarSage },
                       ]}
                     />
-                    <span className="bg-valis-divider text-valis-secondary text-[12px] font-medium px-2.5 py-1 rounded-[5px]">
-                      Bot invited
+                    <span className="bg-valis-divider text-valis-secondary text-[12px] font-medium px-2.5 py-1 rounded-[var(--valis-checkbox-radius)]">
+                      {meetingToggles['m-2'] ? 'Bot invited' : 'Bot paused'}
                     </span>
                     <span className="text-[12.5px] text-valis-muted">
                       Joins automatically
                     </span>
-                    <ValisToggleSwitch
+                    <ValisToggle
                       checked={meetingToggles['m-2']}
                       onChange={() =>
                         setMeetingToggles((p) => ({ ...p, 'm-2': !p['m-2'] }))
@@ -597,7 +704,19 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                 </div>
 
                 {/* Meeting 3 */}
-                <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] px-4 py-3.5 flex items-center justify-between gap-3">
+                <div
+                  onClick={() =>
+                    handleSelectSourceExclusive({
+                      label: 'Calendar · Mon 15:30',
+                      type: 'calendar',
+                      previewTitle: 'Board call on Q4 plan',
+                      previewMeta: 'Monday, 16 November · 15:30–16:15 · Google Calendar',
+                      previewBody:
+                        'Present Q4 renewal exposure, retired-project cost reductions, and consolidated customer delivery metrics to the Board Operating Committee.',
+                    })
+                  }
+                  className="bg-valis-canvas border border-valis-sidebarborder hover:border-valis-controlhover rounded-[var(--valis-panel-radius)] px-4 py-3.5 flex items-center justify-between gap-3 transition-colors cursor-pointer"
+                >
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 text-[13.5px] tabular-nums">
                       <span className="font-semibold text-valis-text">15:30</span>
@@ -609,7 +728,10 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2.5 shrink-0">
+                  <div
+                    className="flex items-center gap-2.5 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <span className="text-[12.5px] text-valis-muted">Invitees</span>
                     <AvatarStack
                       avatars={[
@@ -620,13 +742,13 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                         { initials: '+3', bg: rowDivider, text: textSecondary },
                       ]}
                     />
-                    <span className="bg-valis-divider text-valis-secondary text-[12px] font-medium px-2.5 py-1 rounded-[5px]">
-                      Bot invited
+                    <span className="bg-valis-divider text-valis-secondary text-[12px] font-medium px-2.5 py-1 rounded-[var(--valis-checkbox-radius)]">
+                      {meetingToggles['m-3'] ? 'Bot invited' : 'Bot paused'}
                     </span>
                     <span className="text-[12.5px] text-valis-muted">
                       Joins automatically
                     </span>
-                    <ValisToggleSwitch
+                    <ValisToggle
                       checked={meetingToggles['m-3']}
                       onChange={() =>
                         setMeetingToggles((p) => ({ ...p, 'm-3': !p['m-3'] }))
@@ -640,17 +762,36 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
 
             {/* Tuesday, 17 November */}
             <div>
-              <h3 className="text-[13px] font-semibold text-valis-navinactive mb-2.5">
+              <h3 className="text-[14px] font-semibold text-valis-text mb-2.5">
                 Tuesday, 17 November
               </h3>
-              <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] px-4 py-3.5 flex items-center justify-between gap-3">
+              <div
+                onClick={() =>
+                  handleSelectSourceExclusive({
+                    label: 'Calendar · Tue 11:00',
+                    type: 'calendar',
+                    previewTitle: 'Q4 Pipeline & Renewal Sync',
+                    previewMeta: 'Tuesday, 17 November · 11:00–11:30 · Google Calendar',
+                    previewBody:
+                      'Finalize Q4 enterprise renewal risk schedule and confirm pricing page updates with Tom Becker and Daniel Kim.',
+                  })
+                }
+                className="bg-valis-canvas border border-valis-sidebarborder hover:border-valis-controlhover rounded-[var(--valis-panel-radius)] px-4 py-3.5 flex items-center justify-between gap-3 transition-colors cursor-pointer"
+              >
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 text-[13.5px] tabular-nums">
                     <span className="font-semibold text-valis-text">11:00</span>
                     <span className="text-valis-muted">- 11:30</span>
                   </div>
+                  <div className="mt-1 flex items-center gap-1.5 text-[14px] font-semibold text-valis-text">
+                    <span className="truncate">Q4 Pipeline &amp; Renewal Sync</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-valis-subtle shrink-0" />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2.5 shrink-0">
+                <div
+                  className="flex items-center gap-2.5 shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <AvatarStack
                     avatars={[
                       { initials: 'AM', bg: avatarSlate },
@@ -658,15 +799,15 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                       { initials: 'DK', bg: avatarPlum },
                     ]}
                   />
-                  <span className="bg-valis-divider text-valis-secondary text-[12px] font-medium px-2.5 py-1 rounded-[5px]">
-                    Bot invited
+                  <span className="bg-valis-divider text-valis-secondary text-[12px] font-medium px-2.5 py-1 rounded-[var(--valis-checkbox-radius)]">
+                    {meetingToggles['m-4'] ? 'Bot invited' : 'Bot paused'}
                   </span>
-                  <ValisToggleSwitch
+                  <ValisToggle
                     checked={meetingToggles['m-4']}
                     onChange={() =>
                       setMeetingToggles((p) => ({ ...p, 'm-4': !p['m-4'] }))
                     }
-                    ariaLabel="Joins automatically for Tuesday 11:00 meeting"
+                    ariaLabel="Joins automatically for Q4 Pipeline and Renewal Sync"
                   />
                 </div>
               </div>
@@ -678,28 +819,30 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
       {/* VIEW: LIBRARY */}
       {activeNav === 'Library' && (
         <div className="w-full flex flex-col">
-          {/* Header & Segmented Pill Control */}
+          {/* Header & Canonical Rounded-Full Filter Pills */}
           <div className="pb-4 border-b border-valis-sidebarborder">
             <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em] mb-3">
               My Library
             </h1>
-            <div className="inline-flex items-center bg-valis-sidebar border border-valis-sidebarborder rounded-[var(--valis-control-radius)] p-1 gap-1">
+            <div
+              role="tablist"
+              aria-label="Library type filter"
+              className="flex flex-wrap items-center gap-2"
+            >
               {(['All', 'Meetings', 'Voice Notes', 'Documents'] as const).map(
                 (tab) => {
                   const active = libraryTab === tab;
                   return (
-                    <button
+                    <ValisButton
                       key={tab}
-                      type="button"
+                      variant="pill"
+                      role="tab"
+                      aria-selected={active}
+                      active={active}
                       onClick={() => setLibraryTab(tab)}
-                      className={`px-3 py-1 rounded-[var(--valis-checkbox-radius)] text-[12.5px] transition-colors cursor-pointer ${
-                        active
-                          ? 'bg-valis-canvas border border-valis-chromeborder text-valis-text font-semibold'
-                          : 'text-valis-secondary hover:text-valis-text'
-                      }`}
                     >
                       {tab}
-                    </button>
+                    </ValisButton>
                   );
                 }
               )}
@@ -707,10 +850,22 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
           </div>
 
           {/* Library Date Groups */}
-          <div className="divide-y divide-valis-sidebarborder">
+          <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] mt-4 px-5 divide-y divide-valis-divider">
             {/* Friday, 13 November */}
             {(libraryTab === 'All' || libraryTab === 'Meetings') && (
-              <div className="py-4">
+              <div
+                onClick={() =>
+                  handleSelectSourceExclusive({
+                    label: 'Zoom · Fri 13 Nov',
+                    type: 'notes',
+                    previewTitle: 'Sales plan review',
+                    previewMeta: 'Friday, 13 November · 16:00 · 45min · Zoom',
+                    previewBody:
+                      'Tom presented the Q4 sales plan and asked for feedback by Monday. Two pricing options were agreed for renewal accounts.',
+                  })
+                }
+                className="py-4 -mx-5 px-5 hover:bg-valis-bg transition-colors cursor-pointer"
+              >
                 <div className="text-[12.5px] font-semibold text-valis-navinactive mb-3">
                   Friday, 13 November
                 </div>
@@ -725,7 +880,7 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                       </svg>
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[14.5px] font-semibold text-valis-text">
+                      <div className="text-[14px] font-semibold text-valis-text">
                         Sales plan review
                       </div>
                       <div className="text-[12.5px] text-valis-muted tabular-nums mt-0.5">
@@ -749,7 +904,19 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
 
             {/* Thursday, 12 November */}
             {(libraryTab === 'All' || libraryTab === 'Meetings') && (
-              <div className="py-4">
+              <div
+                onClick={() =>
+                  handleSelectSourceExclusive({
+                    label: 'Google Meet · Thu 12 Nov',
+                    type: 'notes',
+                    previewTitle: 'Pricing review',
+                    previewMeta: 'Thursday, 12 November · 11:00 · 50min · Google Meet',
+                    previewBody:
+                      'The annual discount will be tested with new customers only. Tom Becker drafts the price page changes before Tuesday.',
+                  })
+                }
+                className="py-4 -mx-5 px-5 hover:bg-valis-bg transition-colors cursor-pointer"
+              >
                 <div className="text-[12.5px] font-semibold text-valis-navinactive mb-3">
                   Thursday, 12 November
                 </div>
@@ -764,7 +931,7 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                       </svg>
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[14.5px] font-semibold text-valis-text">
+                      <div className="text-[14px] font-semibold text-valis-text">
                         Pricing review
                       </div>
                       <div className="text-[12.5px] text-valis-muted tabular-nums mt-0.5">
@@ -789,7 +956,19 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
 
             {/* Wednesday, 11 November */}
             {(libraryTab === 'All' || libraryTab === 'Meetings') && (
-              <div className="py-4">
+              <div
+                onClick={() =>
+                  handleSelectSourceExclusive({
+                    label: 'Teams · Wed 11 Nov',
+                    type: 'notes',
+                    previewTitle: 'Support hiring plan',
+                    previewMeta: 'Wednesday, 11 November · 14:30 · 30min · Microsoft Teams',
+                    previewBody:
+                      'Maria proposed two new support roles to bring the backlog down. The plan is waiting for contract review merge approval.',
+                  })
+                }
+                className="py-4 -mx-5 px-5 hover:bg-valis-bg transition-colors cursor-pointer"
+              >
                 <div className="text-[12.5px] font-semibold text-valis-navinactive mb-3">
                   Wednesday, 11 November
                 </div>
@@ -806,7 +985,7 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                       </svg>
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[14.5px] font-semibold text-valis-text">
+                      <div className="text-[14px] font-semibold text-valis-text">
                         Support hiring plan
                       </div>
                       <div className="text-[12.5px] text-valis-muted tabular-nums mt-0.5">
@@ -832,7 +1011,19 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
             {(libraryTab === 'All' ||
               libraryTab === 'Voice Notes' ||
               libraryTab === 'Documents') && (
-              <div className="py-4">
+              <div
+                onClick={() =>
+                  handleSelectSourceExclusive({
+                    label: 'Voice Note · Tue 10 Nov',
+                    type: 'notes',
+                    previewTitle: 'Notes after the board prep',
+                    previewMeta: 'Tuesday, 10 November · 18:10 · 4min · Valis Voice Note',
+                    previewBody:
+                      'Three questions to prepare for the next board meeting: Q4 renewal exposure, retired-project spend cutoff, and Support hiring timing.',
+                  })
+                }
+                className="py-4 -mx-5 px-5 hover:bg-valis-bg transition-colors cursor-pointer"
+              >
                 <div className="text-[12.5px] font-semibold text-valis-navinactive mb-3">
                   Tuesday, 10 November
                 </div>
@@ -842,7 +1033,7 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                       <Mic className="w-[17px] h-[17px]" strokeWidth={1.7} />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[14.5px] font-semibold text-valis-text">
+                      <div className="text-[14px] font-semibold text-valis-text">
                         Notes after the board prep
                       </div>
                       <div className="text-[12.5px] text-valis-muted tabular-nums mt-0.5">
@@ -865,77 +1056,125 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
 
       {/* VIEW: CHAT */}
       {activeNav === 'Chat' && (
-        <div className="w-full flex-1 flex flex-col justify-end">
-          {chatHistory.length > 0 && (
-            <div className="mb-auto space-y-3 max-h-[340px] overflow-y-auto pr-1">
-              {chatHistory.map((msg, i) => (
-                <div
-                  key={i}
-                  className={`p-3.5 rounded-[var(--valis-panel-radius)] text-[13.5px] ${
-                    msg.role === 'user'
-                      ? 'bg-valis-activeitem text-valis-text font-medium'
-                      : 'bg-valis-bg border border-valis-sidebarborder text-valis-text'
-                  }`}
-                >
-                  <div>{msg.text}</div>
-                  {msg.citation && (
-                    <div className="mt-1.5 text-[11.5px] text-valis-subtle underline">
-                      Source: {msg.citation}
+        <div className="max-w-[720px] w-full mx-auto flex-1 flex flex-col justify-between min-h-0">
+          {chatHistory.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-2 py-6">
+              <div className="w-10 h-10 rounded-[var(--valis-panel-radius)] bg-valis-divider flex items-center justify-center text-valis-text shrink-0">
+                <ValisKnotMark className="w-6 h-6" />
+              </div>
+
+              <h1 className="text-[18px] font-semibold text-valis-text tracking-[-0.015em] mt-3">
+                Ask Valis
+              </h1>
+
+              <div className="mt-1.5 text-[11.5px] text-valis-navinactive bg-valis-divider/80 px-2.5 py-0.5 rounded-full">
+                {memoryScope === 'second-brain'
+                  ? 'Personal Second Brain · Private to you'
+                  : 'Demo company · Meetings, Slack & Jira'}
+              </div>
+
+              <div className="w-full max-w-[520px] mt-6 space-y-2 text-left">
+                {[
+                  'What did we decide in the pricing review?',
+                  'Why is the support hiring plan still waiting?',
+                  'What do others owe me this week?',
+                ].map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    disabled={isVerifyingChat}
+                    onClick={() => askQuestionInChat(prompt)}
+                    className="w-full bg-valis-canvas border border-valis-sidebarborder hover:border-valis-text rounded-[var(--valis-card-radius)] px-3.5 py-2.5 flex items-center justify-between gap-2 text-[13.5px] text-valis-text transition-colors group cursor-pointer text-left disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    <span className="leading-[1.35]">{prompt}</span>
+                    <ArrowUpRight
+                      className="w-[13px] h-[13px] text-valis-subtle group-hover:text-valis-text shrink-0 transition-colors"
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div
+              ref={chatScrollRef}
+              className="flex-1 overflow-y-auto space-y-5 pb-6 pr-1 min-h-0"
+            >
+              {chatHistory.map((msg, i) =>
+                msg.role === 'user' ? (
+                  <div key={i} className="flex justify-end">
+                    <div className="bg-valis-divider text-valis-text text-[13.5px] leading-[1.5] px-3.5 py-2.5 rounded-[12px] rounded-tr-[4px] max-w-[80%] ml-auto">
+                      {msg.text}
                     </div>
-                  )}
+                  </div>
+                ) : (
+                  <div key={i} className="space-y-1.5 py-1">
+                    <div className="flex items-center gap-1.5 text-[11.5px] font-medium">
+                      <CheckCircle2
+                        className="w-[13px] h-[13px] text-valis-green shrink-0"
+                        strokeWidth={2}
+                        aria-hidden="true"
+                      />
+                      <span className="text-valis-green">
+                        Allowed · Verified against scope
+                      </span>
+                    </div>
+                    <p className="text-[14px] leading-[1.55] text-valis-text">
+                      {msg.text}
+                    </p>
+                    {msg.source && (
+                      <div className="pt-1 flex items-center gap-1.5 text-[12px] text-valis-subtle">
+                        <span>Source:</span>
+                        <SourceCitationLink
+                          source={msg.source}
+                          onSelect={handleSelectSourceExclusive}
+                        />
+                      </div>
+                    )}
+                  </div>
+                )
+              )}
+
+              {isVerifyingChat && (
+                <div
+                  role="status"
+                  aria-live="polite"
+                  className="py-1 text-[12px] text-valis-subtle animate-pulse"
+                >
+                  Checking{' '}
+                  {memoryScope === 'second-brain'
+                    ? 'Personal Second Brain'
+                    : 'Demo company'}{' '}
+                  sources...
                 </div>
-              ))}
+              )}
             </div>
           )}
 
-          {/* Centered Prompt Area above bottom input */}
-          <div className="text-center mb-5">
-            <p className="text-[15px] text-valis-navinactive mb-5">
-              Ask about meetings, messages and documents in the demo company.
-            </p>
-
-            {/* 2 + 1 Suggestion Pills */}
-            <div className="flex flex-wrap items-center justify-center gap-2.5 max-w-[640px] mx-auto">
-              <button
-                type="button"
-                onClick={() =>
-                  askQuestionInChat('What did we decide in the pricing review?')
-                }
-                className="bg-valis-bg border border-valis-chromeborder hover:border-valis-controlhover text-valis-secondary text-[13px] px-4 py-2 rounded-[var(--valis-control-radius)] transition-colors cursor-pointer"
-              >
-                What did we decide in the pricing review?
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  askQuestionInChat('Why is the support hiring plan still waiting?')
-                }
-                className="bg-valis-bg border border-valis-chromeborder hover:border-valis-controlhover text-valis-secondary text-[13px] px-4 py-2 rounded-[var(--valis-control-radius)] transition-colors cursor-pointer"
-              >
-                Why is the support hiring plan still waiting?
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  askQuestionInChat('What do others owe me this week?')
-                }
-                className="bg-valis-bg border border-valis-chromeborder hover:border-valis-controlhover text-valis-secondary text-[13px] px-4 py-2 rounded-[var(--valis-control-radius)] transition-colors cursor-pointer"
-              >
-                What do others owe me this week?
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Full-Width Input Box */}
-          <form onSubmit={handleSendChat}>
-            <input
-              type="text"
+          {/* Unified Floating Composer */}
+          <div className="pt-2 shrink-0">
+            <ValisChatComposer
               value={chatQuery}
-              onChange={(e) => setChatQuery(e.target.value)}
-              placeholder="Ask about your meetings and notes..."
-              className="w-full bg-valis-bg border border-valis-chromeborder rounded-[var(--valis-control-radius)] px-4 py-3.5 text-[14px] text-valis-text placeholder:text-valis-subtle focus:outline-none focus:border-valis-controlhover"
+              onChange={setChatQuery}
+              onSubmit={() => askQuestionInChat(chatQuery)}
+              placeholder={
+                memoryScope === 'second-brain'
+                  ? 'Ask about your private notes and voice memos...'
+                  : 'Ask about meetings, messages and documents...'
+              }
+              ariaLabel="Ask about your meetings and notes"
+              scopeLabel={
+                memoryScope === 'second-brain'
+                  ? 'Personal Second Brain'
+                  : 'Demo company'
+              }
+              showClear={chatHistory.length > 0}
+              onClear={handleClearChat}
+              isSubmitting={isVerifyingChat}
+              submitAriaLabel="Send chat message"
             />
-          </form>
+          </div>
         </div>
       )}
 
@@ -943,12 +1182,12 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
         activeNav === 'Groups' ||
         activeNav === 'Settings') && (
         <div className="w-full flex-1">
-          <div className="pb-3.5 mb-4 border-b border-valis-sidebarborder flex items-center justify-between">
+          <div className="pb-3.5 mb-4 border-b border-valis-sidebarborder flex items-center justify-between gap-4">
             <div>
               <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                 {activeNav}
               </h1>
-              <p className="text-[14px] text-valis-secondary">
+              <p className="text-[14px] text-valis-secondary mt-0.5">
                 {activeNav === 'Dictation' &&
                   'System-wide voice dictation shortcut and custom company vocabulary.'}
                 {activeNav === 'Groups' &&
@@ -957,17 +1196,16 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                   'Connected work credentials, calendar auto-join preferences, and local device audio.'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => onSelectNav('Home')}
-              className="text-[12.5px] text-valis-blue underline underline-offset-2 cursor-pointer"
+            <ValisButton
+              variant="link"
+              onClick={() => handleSelectNavIsolated('Home')}
             >
               Return to Daily Brief
-            </button>
+            </ValisButton>
           </div>
 
           {activeNav === 'Dictation' && (
-            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] p-4 flex items-center justify-between text-[13.5px]">
+            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] p-4 flex items-center justify-between text-[14px]">
               <div>
                 <div className="font-semibold text-valis-text">
                   Push-to-talk hotkey
@@ -976,14 +1214,14 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                   Hold Fn or Right Option anywhere on macOS to dictate with company terminology
                 </div>
               </div>
-              <span className="bg-valis-divider text-valis-text text-[12px] font-mono px-2.5 py-1 rounded-[5px]">
+              <span className="bg-valis-divider text-valis-text text-[12px] font-mono px-2.5 py-1 rounded-[var(--valis-checkbox-radius)]">
                 Fn (Hold)
               </span>
             </div>
           )}
 
           {activeNav === 'Groups' && (
-            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] divide-y divide-valis-divider px-4 text-[13.5px]">
+            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] divide-y divide-valis-divider px-4 text-[14px]">
               <div className="py-3.5 flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-valis-text">Executive Staff</div>
@@ -991,32 +1229,38 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                     Alex Morgan, Priya Nair, Tom Becker, Daniel Kim · Explicit grant active
                   </div>
                 </div>
-                <span className="text-[12px] text-valis-green font-medium">4 members</span>
+                <span className="text-[12.5px] text-valis-green font-medium tabular-nums">
+                  4 members
+                </span>
               </div>
               <div className="py-3.5 flex items-center justify-between">
                 <div>
-                  <div className="font-semibold text-valis-text">Support & Deal Desk Ops</div>
+                  <div className="font-semibold text-valis-text">Support &amp; Deal Desk Ops</div>
                   <div className="text-[12.5px] text-valis-muted">
                     Maria Lopez, Commercial Legal · Contract intake alignment
                   </div>
                 </div>
-                <span className="text-[12px] text-valis-green font-medium">7 members</span>
+                <span className="text-[12.5px] text-valis-green font-medium tabular-nums">
+                  7 members
+                </span>
               </div>
             </div>
           )}
 
           {activeNav === 'Settings' && (
-            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] divide-y divide-valis-divider px-4 text-[13.5px]">
+            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] divide-y divide-valis-divider px-4 text-[14px]">
               <div className="py-3.5 flex items-center justify-between">
                 <div>
                   <div className="font-semibold text-valis-text">
-                    Google Workspace & Slack SSO
+                    Google Workspace &amp; Slack SSO
                   </div>
                   <div className="text-[12.5px] text-valis-muted">
                     Signed in as alex@demo.valis.so · Read-only default
                   </div>
                 </div>
-                <span className="text-[12px] text-valis-green font-medium">Connected</span>
+                <span className="text-[12.5px] text-valis-green font-medium">
+                  Connected
+                </span>
               </div>
               <div className="py-3.5 flex items-center justify-between">
                 <div>
@@ -1027,13 +1271,12 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
                     Open Workflow Diagnostics, Valis Pulse, Management Loop, and AI Security
                   </div>
                 </div>
-                <button
-                  type="button"
+                <ValisButton
+                  variant="link"
                   onClick={onSwitchToAdminConsole}
-                  className="text-[12.5px] text-valis-blue font-medium underline cursor-pointer"
                 >
                   Open Admin Console
-                </button>
+                </ValisButton>
               </div>
             </div>
           )}

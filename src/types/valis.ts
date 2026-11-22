@@ -287,6 +287,7 @@ export interface SecuritySandboxChatMessage {
   text: string;
   statusLabel?: string;
   statusTone?: 'allowed' | 'blocked' | 'firewall';
+  sourceCitation?: string;
 }
 
 

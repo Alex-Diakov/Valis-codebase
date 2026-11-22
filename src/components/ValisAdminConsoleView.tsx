@@ -18,11 +18,18 @@ import {
   AuditLogEvent,
   LoopExecutionMode,
   ProductSurface,
+  SourceLink,
   UxVersionMode,
 } from '../types/valis';
 import { AdminSidebar } from './AdminSidebar';
-import { MetricCard } from '../design-system/atoms/MetricCard';
-import { PulseAttentionRow } from '../design-system/molecules/PulseAttentionRow';
+import {
+  MetricCard,
+  PulseAttentionRow,
+  SourceCitationLink,
+  ValisButton,
+  ValisDrawer,
+  ValisSectionEyebrow,
+} from '../design-system';
 import { AiSecurityView } from './AiSecurityView';
 
 interface ValisAdminConsoleViewProps {
@@ -94,7 +101,7 @@ interface ProposedApprovalRow {
   ownerLast: string;
   nextStep: string;
   why: string;
-  source: string;
+  source: SourceLink;
 }
 
 const INITIAL_PROPOSED_APPROVALS: ProposedApprovalRow[] = [
@@ -105,7 +112,14 @@ const INITIAL_PROPOSED_APPROVALS: ProposedApprovalRow[] = [
     nextStep:
       'Confirm which old-project commitments must continue before Friday renewal.',
     why: 'Old project renewals',
-    source: 'Email from Priya Nair',
+    source: {
+      label: 'Email from Priya Nair',
+      type: 'email',
+      previewTitle: 'Re: Q4 Vendor & Legacy Project Renewals',
+      previewMeta: 'Gmail · From Priya Nair · Fri 13 Nov · 09:15',
+      previewBody:
+        'Three retired-project vendor contracts auto-renew this Friday unless Finance confirms explicit non-renewal notice.',
+    },
   },
   {
     id: 'pa-2',
@@ -113,7 +127,14 @@ const INITIAL_PROPOSED_APPROVALS: ProposedApprovalRow[] = [
     ownerLast: 'Kim',
     nextStep: 'Send the renewal risk view, promised for 10 Nov.',
     why: 'Board pack due next week',
-    source: 'Jira OPS-142',
+    source: {
+      label: 'Jira OPS-142',
+      type: 'jira',
+      previewTitle: 'OPS-142 · Consolidated Q4 Renewal Risk View',
+      previewMeta: 'Jira · Assigned to Daniel Kim · Due 10 Nov',
+      previewBody:
+        'Compile enterprise renewal exposure across the $25M ARR cohort for next week’s Board Operating Committee pack.',
+    },
   },
   {
     id: 'pa-3',
@@ -122,7 +143,14 @@ const INITIAL_PROPOSED_APPROVALS: ProposedApprovalRow[] = [
     nextStep:
       'Share renewal options by Wednesday, as agreed in the launch review.',
     why: 'Q4 priority: align promises',
-    source: 'Meeting, launch review',
+    source: {
+      label: 'Meeting, launch review',
+      type: 'notes',
+      previewTitle: 'Q4 Launch & Renewal Alignment Review',
+      previewMeta: 'Meeting transcript · Thu 12 Nov · 15:00',
+      previewBody:
+        'Agreed that Tom Becker will publish the two standard renewal pricing options by Wednesday to align Sales and Finance.',
+    },
   },
   {
     id: 'pa-4',
@@ -131,7 +159,14 @@ const INITIAL_PROPOSED_APPROVALS: ProposedApprovalRow[] = [
     nextStep:
       'Agree one owner and shared result for duplicate contract reviews.',
     why: 'Duplicate reviews consume capacity',
-    source: 'Meeting, operations',
+    source: {
+      label: 'Meeting, operations',
+      type: 'notes',
+      previewTitle: 'Support & Deal Desk Operations Review',
+      previewMeta: 'Meeting transcript · Wed 11 Nov · 14:30',
+      previewBody:
+        'Customer Support and Commercial Legal are running parallel contract reviews; consolidating to one owner recovers 14 hours/week.',
+    },
   },
 ];
 
@@ -171,8 +206,11 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
   const [autopilotOverrides, setAutopilotOverrides] = useState<
     Record<string, 'paused' | undefined>
   >({});
+  const [inspectedLoopSource, setInspectedLoopSource] =
+    useState<SourceLink | null>(null);
 
   const handleSelectNav = (nav: AdminNavId) => {
+    setInspectedLoopSource(null);
     onSelectAdminNav(nav);
     onSelectReport(null);
   };
@@ -240,33 +278,29 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
               {PILL_TABS.map((tab) => {
                 const isActive = selectedType === tab;
                 return (
-                    <button
-                      key={tab}
-                      type="button"
-                      role="tab"
-                      aria-selected={isActive}
-                      onClick={() => onChangeType(tab)}
-                      className={`rounded-full px-3.5 py-1 text-[12.5px] transition-colors cursor-pointer ${
-                        isActive
-                          ? 'bg-valis-text text-valis-canvas font-medium'
-                          : 'bg-valis-canvas text-valis-muted border border-valis-chromeborder hover:text-valis-text hover:border-valis-controlhover'
-                      }`}
-                    >
-                      {tab}
-                    </button>
+                  <ValisButton
+                    key={tab}
+                    variant="pill"
+                    role="tab"
+                    aria-selected={isActive}
+                    active={isActive}
+                    onClick={() => onChangeType(tab)}
+                  >
+                    {tab}
+                  </ValisButton>
                 );
               })}
             </div>
 
-            {/* White Table Card */}
-            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] px-6 py-2.5">
+            {/* Unified Full-Bleed Table Card */}
+            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] overflow-hidden p-0">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-valis-divider text-[12.5px] font-semibold text-valis-text">
-                    <th className="py-3 pr-4 font-semibold">Report</th>
-                    <th className="py-3 px-4 font-semibold">Department</th>
-                    <th className="py-3 px-4 font-semibold">Type</th>
-                    <th className="py-3 pl-4 text-right font-semibold">Updated</th>
+                    <th className="py-3.5 pl-6 pr-4 font-semibold">Report</th>
+                    <th className="py-3.5 px-4 font-semibold">Department</th>
+                    <th className="py-3.5 px-4 font-semibold">Type</th>
+                    <th className="py-3.5 pl-4 pr-6 text-right font-semibold">Updated</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-valis-divider text-[13.5px]">
@@ -274,7 +308,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                     <tr>
                       <td
                         colSpan={4}
-                        className="py-8 text-center text-[13px] text-valis-subtle"
+                        className="py-8 px-6 text-center text-[13px] text-valis-subtle"
                       >
                         No matching reports found.{' '}
                         <button
@@ -297,7 +331,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                         onClick={() => onSelectReport(row)}
                         className="hover:bg-valis-bg transition-colors cursor-pointer group"
                       >
-                        <td className="py-3.5 pr-4">
+                        <td className="py-3.5 pl-6 pr-4">
                           <button
                             type="button"
                             onClick={(e) => {
@@ -317,7 +351,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                           {row.department}
                         </td>
                         <td className="py-3.5 px-4 text-valis-text">{row.type}</td>
-                        <td className="py-3.5 pl-4 text-right text-valis-text tabular-nums">
+                        <td className="py-3.5 pl-4 pr-6 text-right text-valis-text tabular-nums">
                           {row.updated}
                         </td>
                       </tr>
@@ -466,12 +500,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             </div>
 
             {/* Section Divider: — WORK */}
-            <div className="flex items-center gap-2.5 mb-3.5">
-              <span className="w-4 h-[1px] bg-valis-dash inline-block" />
-              <span className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
-                WORK
-              </span>
-            </div>
+            <ValisSectionEyebrow label="WORK" withDash className="mb-3.5" />
 
             {/* 4 Metric Cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
@@ -564,12 +593,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             </div>
 
             {/* Section Divider: — MEETINGS */}
-            <div className="flex items-center gap-2.5 mb-3.5">
-              <span className="w-4 h-[1px] bg-valis-dash inline-block" />
-              <span className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
-                MEETINGS
-              </span>
-            </div>
+            <ValisSectionEyebrow label="MEETINGS" withDash className="mb-3.5" />
 
             {/* Card 4: Where does meeting time go? */}
             <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] p-5">
@@ -621,7 +645,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                 <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                   Management Loop
                 </h1>
-                <span className="bg-valis-earlybg text-valis-earlytext text-[12px] font-medium px-2.5 py-0.5 rounded-[5px]">
+                <span className="bg-valis-earlybg text-valis-earlytext text-[12px] font-medium px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)]">
                   Early access
                 </span>
               </div>
@@ -636,33 +660,34 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             </p>
 
             {/* Human in the loop / Autopilot Controls */}
-            <div className="flex items-center gap-2 mb-6">
+            <div
+              role="tablist"
+              aria-label="Management Loop execution mode"
+              className="flex items-center gap-2 mb-6"
+            >
               {(['Human in the loop', 'Autopilot'] as const).map((mode) => {
                 const active = managementMode === mode;
                 return (
-                  <button
+                  <ValisButton
                     key={mode}
-                    type="button"
+                    variant="pill"
+                    role="tab"
+                    aria-selected={active}
+                    active={active}
                     onClick={() => setManagementMode(mode)}
-                    className={`rounded-full px-3.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer ${
-                      active
-                        ? 'bg-valis-text text-valis-canvas'
-                        : 'bg-valis-canvas border border-valis-chromeborder text-valis-muted hover:text-valis-text hover:border-valis-controlhover'
-                    }`}
                   >
                     {mode}
-                  </button>
+                  </ValisButton>
                 );
               })}
             </div>
 
             {/* Section Divider: — STRATEGY THIS QUARTER */}
-            <div className="flex items-center gap-2.5 mb-3">
-              <span className="w-4 h-[1px] bg-valis-dash inline-block" />
-              <span className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
-                STRATEGY THIS QUARTER
-              </span>
-            </div>
+            <ValisSectionEyebrow
+              label="STRATEGY THIS QUARTER"
+              withDash
+              className="mb-3"
+            />
 
             {/* Strategy Card */}
             <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] px-6 py-4 mb-6">
@@ -674,29 +699,30 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             </div>
 
             {/* Section Divider: — PROPOSED FOR APPROVAL vs AUTOPILOT EXECUTION LOG */}
-            <div className="flex items-center gap-2.5 mb-3">
-              <span className="w-4 h-[1px] bg-valis-dash inline-block" />
-              <span className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
-                {managementMode === 'Autopilot'
+            <ValisSectionEyebrow
+              label={
+                managementMode === 'Autopilot'
                   ? 'AUTOPILOT EXECUTION LOG · RUNNING UNDER AGREED POLICY'
-                  : 'PROPOSED FOR APPROVAL'}
-              </span>
-            </div>
+                  : 'PROPOSED FOR APPROVAL'
+              }
+              withDash
+              className="mb-3"
+            />
 
-            {/* Proposed for Approval / Autopilot Table Card */}
-            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] px-6 py-3">
+            {/* Unified Full-Bleed Proposed for Approval / Autopilot Table Card */}
+            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] overflow-hidden p-0">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-valis-divider text-[12.5px] font-semibold text-valis-text">
-                    <th className="py-3 pr-4 w-[110px] font-semibold">Owner</th>
-                    <th className="py-3 px-3 font-semibold">Next step</th>
-                    <th className="py-3 px-3 w-[160px] font-semibold">Why</th>
-                    <th className="py-3 px-3 w-[145px] font-semibold">Source</th>
+                    <th className="py-3.5 pl-6 pr-4 w-[134px] font-semibold">Owner</th>
+                    <th className="py-3.5 px-3 font-semibold">Next step</th>
+                    <th className="py-3.5 px-3 w-[160px] font-semibold">Why</th>
+                    <th className="py-3.5 px-3 w-[165px] font-semibold">Source</th>
                     <th
-                      className={`py-3 pl-3 font-semibold ${
+                      className={`py-3.5 pl-3 pr-6 font-semibold ${
                         managementMode === 'Autopilot'
-                          ? 'w-[215px]'
-                          : 'w-[150px]'
+                          ? 'w-[239px]'
+                          : 'w-[184px]'
                       }`}
                     >
                       Decision
@@ -708,8 +734,11 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                     const decision = approvalDecisions[row.id];
                     const isPaused = autopilotOverrides[row.id] === 'paused';
                     return (
-                      <tr key={row.id}>
-                        <td className="py-4 pr-4 font-semibold text-valis-text leading-[1.35]">
+                      <tr
+                        key={row.id}
+                        className="hover:bg-valis-bg transition-colors"
+                      >
+                        <td className="py-4 pl-6 pr-4 font-semibold text-valis-text leading-[1.35]">
                           {row.ownerFirst} {row.ownerLast}
                         </td>
                         <td className="py-4 px-3 text-valis-text leading-[1.45]">
@@ -718,33 +747,36 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                         <td className="py-4 px-3 text-valis-text leading-[1.45]">
                           {row.why}
                         </td>
-                        <td className="py-4 px-3 text-valis-text leading-[1.45]">
-                          {row.source}
+                        <td className="py-4 px-3 leading-[1.45]">
+                          <SourceCitationLink
+                            source={row.source}
+                            onSelect={setInspectedLoopSource}
+                          />
                         </td>
-                        <td className="py-4 pl-3">
+                        <td className="py-4 pl-3 pr-6">
                           {managementMode === 'Autopilot' ? (
                             <div className="flex items-center gap-2">
                               <span
-                                className={`px-2.5 py-1 rounded-[5px] text-[11.5px] font-medium border shrink-0 ${
+                                className={`px-2.5 py-1 rounded-[var(--valis-checkbox-radius)] text-[11.5px] font-medium border shrink-0 whitespace-nowrap ${
                                   isPaused
                                     ? 'bg-valis-sidebar border-valis-chromeborder text-valis-muted'
                                     : 'bg-valis-greenbg border-valis-greenborder text-valis-green'
                                 }`}
                               >
-                                {isPaused ? 'Paused' : '⚡ Auto-assigned'}
+                                {isPaused ? 'Paused' : 'Auto-assigned'}
                               </span>
-                              <button
-                                type="button"
+                              <ValisButton
+                                variant="secondary"
+                                size="sm"
                                 onClick={() =>
                                   setAutopilotOverrides((p) => ({
                                     ...p,
                                     [row.id]: isPaused ? undefined : 'paused',
                                   }))
                                 }
-                                className="px-2.5 py-1 rounded-[5px] text-[11.5px] font-medium border bg-valis-canvas border-valis-chromeborder text-valis-secondary hover:text-valis-text hover:border-valis-controlhover transition-colors cursor-pointer shrink-0"
                               >
                                 {isPaused ? 'Resume' : 'Override'}
-                              </button>
+                              </ValisButton>
                             </div>
                           ) : (
                             <div className="flex items-center gap-2">
@@ -930,6 +962,46 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
           onSelectSecurityTab={handleSelectNav}
           onRunRunbook={onRunRunbook}
         />
+      )}
+
+      {/* Unified Slide-Over Source Inspector for Management Loop Primary Sources (VALIS-RULE-01 & 10) */}
+      {inspectedLoopSource && (
+        <ValisDrawer
+          isOpen={true}
+          onClose={() => setInspectedLoopSource(null)}
+          eyebrow="Verified Primary Source"
+          title={inspectedLoopSource.previewTitle}
+          subtitle={inspectedLoopSource.previewMeta}
+          ariaLabel="Management Loop primary source inspector"
+        >
+          <div className="flex flex-wrap items-center gap-1.5 mb-3">
+            <span className="bg-valis-activeitem text-valis-text text-[12px] font-medium px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)]">
+              {inspectedLoopSource.label}
+            </span>
+            <span className="text-[12px] font-medium px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)] border bg-valis-sidebar text-valis-navinactive border-valis-chromeborder">
+              Read-only
+            </span>
+          </div>
+
+          <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-card-radius)] p-4 mb-4">
+            <div className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium mb-2">
+              Source Excerpt
+            </div>
+            <p className="text-[13.5px] leading-[1.55] text-valis-text">
+              <span className="bg-valis-deltabg px-1 rounded-[2px] text-valis-text">
+                {inspectedLoopSource.previewBody}
+              </span>
+            </p>
+          </div>
+
+          <ValisButton
+            variant="secondary"
+            className="w-full"
+            onClick={() => setInspectedLoopSource(null)}
+          >
+            Close source preview
+          </ValisButton>
+        </ValisDrawer>
       )}
     </div>
   );
