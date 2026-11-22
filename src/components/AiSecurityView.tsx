@@ -498,24 +498,34 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
       subjectId === 'subj-maria' ||
       meetingMatch?.teamCallsMode === 'not-manager';
 
+    let leadName = isContractLocked ? 'Rollout Engineers' : 'Team Lead';
     let teamCallsLabel = isContractLocked
       ? 'Lead Grant · Rollout Engineers'
       : 'Lead Grant';
     if (teamMatch && !isContractLocked) {
       const leadRaw = teamMatch.personName.split(' · ')[0].trim();
       if (leadRaw) {
+        leadName = leadRaw;
         teamCallsLabel = `Lead Grant · ${leadRaw}`;
       }
     } else if (meetingMatch && !isContractLocked) {
       const leadRaw = meetingMatch.personName.split(' · ')[0].trim();
+      leadName = leadRaw;
       teamCallsLabel = `Lead Grant · ${leadRaw}`;
     }
+
+    const membersSource =
+      meetingMatch?.departmentMembersSubtitle ?? teamMatch?.personName ?? '';
+    const membersMatch = membersSource.match(/(\d+)\s+members/i);
+    const memberCount = membersMatch ? Number(membersMatch[1]) : null;
 
     return {
       allowed: meetingMatch?.teamCallsAllowed ?? false,
       ineligibleIndividual: isIneligibleIndividual,
       contractLocked: isContractLocked,
       teamCallsLabel,
+      leadName,
+      memberCount,
     };
   };
 
@@ -716,9 +726,9 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
     : null;
 
   return (
-    <div className="flex-1 flex min-w-0 h-full overflow-hidden relative">
-      {/* Main Full-Width Editorial View Canvas (Never squished by Slide-Over Drawer) */}
-      <div className="flex-1 min-w-0 overflow-y-auto px-8 py-8">
+    <div className="flex-1 flex min-w-0 h-full overflow-hidden relative bg-valis-bg">
+      {/* Main Full-Width Editorial View Canvas (Unified Warm-Paper Surface) */}
+      <div className="flex-1 min-w-0 overflow-y-auto px-8 py-8 bg-valis-bg">
         <div className="max-w-[1040px]">
           {/* =========================================================
               VIEW 1: Sidebar Tab === 'AI access' (CLEAN 3-COLUMN EDITORIAL TABLE)
@@ -728,9 +738,9 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
               {/* Header row */}
               <div className="flex justify-between items-baseline gap-4 mb-6">
                 <div>
-                  <h2 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
+                  <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                     AI &amp; Tool Access
-                  </h2>
+                  </h1>
                   <p className="text-[14px] text-valis-secondary mt-1 leading-[1.5]">
                     Control which company tools each department and their AI assistant can read or edit.
                   </p>
@@ -813,9 +823,9 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
               {/* Header row */}
               <div className="flex justify-between items-baseline gap-4 mb-6">
                 <div>
-                  <h2 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
+                  <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                     Meeting &amp; Voice Note Permissions
-                  </h2>
+                  </h1>
                   <p className="text-[14px] text-valis-secondary mt-1 leading-[1.5]">
                     By default, all employees only see calls they attended, and personal Second Brains are always private to the author.
                   </p>
@@ -904,10 +914,10 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
                                       );
                                     }
                                   }}
-                                  className={`text-[12px] px-2.5 py-0.5 rounded-[4px] border transition-colors cursor-pointer whitespace-nowrap ${
+                                  className={`text-[12px] px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)] border transition-colors cursor-pointer whitespace-nowrap ${
                                     !row.teamCallsAllowed
                                       ? 'bg-valis-canvas border-valis-controlborder text-valis-text font-medium'
-                                      : 'border-transparent text-valis-muted hover:text-valis-text'
+                                      : 'border-transparent text-valis-navinactive hover:text-valis-text'
                                   }`}
                                 >
                                   Own calls
@@ -923,10 +933,10 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
                                       );
                                     }
                                   }}
-                                  className={`text-[12px] px-2.5 py-0.5 rounded-[4px] border transition-colors cursor-pointer whitespace-nowrap ${
+                                  className={`text-[12px] px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)] border transition-colors cursor-pointer whitespace-nowrap ${
                                     row.teamCallsAllowed
                                       ? 'bg-valis-text border-valis-text text-valis-canvas font-medium'
-                                      : 'border-transparent text-valis-muted hover:text-valis-text'
+                                      : 'border-transparent text-valis-navinactive hover:text-valis-text'
                                   }`}
                                 >
                                   {scopeLabel}
@@ -963,9 +973,9 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
           {activeSecurityTab === 'Audit log' && (
             <div>
               <div className="mb-5">
-                <h2 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
+                <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                   Security &amp; AI Audit Log
-                </h2>
+                </h1>
                 <p className="text-[14px] text-valis-secondary mt-1 leading-[1.5]">
                   Every permission change and AI chat boundary check is recorded in real time over a 365-day trail.
                 </p>
@@ -1051,6 +1061,8 @@ export const AiSecurityView: React.FC<AiSecurityViewProps> = ({
           <SecurityAiChatSandboxDrawer
             subjectName={activeSubjectDisplay.name}
             subjectSubtitle={activeSubjectDisplay.subtitle}
+            leadName={activeSubjectMeetingState.leadName}
+            memberCount={activeSubjectMeetingState.memberCount}
             activeDrawerTab={activeDrawerTab}
             onSelectDrawerTab={setActiveDrawerTab}
             teamCallsLabel={activeSubjectMeetingState.teamCallsLabel}

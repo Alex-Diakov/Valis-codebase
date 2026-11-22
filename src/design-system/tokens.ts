@@ -56,6 +56,7 @@ export const VALIS_TOKENS = {
     ochreBar: '#B56B27',
     linkBlue: '#1D63B8',
     linkBlueUnderline: '#98B9E2',
+    blockedRed: '#9E3B2B',
 
     // 5. Obsidian Dark Security Surface (AiSecurityView)
     securityDarkBg: '#0D0E12',
@@ -86,24 +87,33 @@ export const VALIS_TOKENS = {
     trackingTight: '-0.015em',
     headingTracking: '-0.02em',
     scale: {
+      h1: '22px',
+      h2: '18px',
+      h3: '14px',
+      eyebrow: '11px',
+      body: '14px',
+      meta: '12.5px',
+      // Legacy semantic aliases retained for backwards compatibility
       pageHeading: '22px',
       subviewHeading: '20px',
       sectionHeading: '14px',
       bodyPrimary: '14px',
       metadata: '12.5px',
       badge: '11px',
-      microCap: '10px',
     },
   },
   geometry: {
     sidebarWidth: '230px',
     appWorkspaceMaxWidth: '1020px',
     adminWorkspaceMaxWidth: '1100px',
-    contextDrawerWidth: '340px',
+    drawerWidth: '420px',
+    contextDrawerWidth: '420px',
     panelRadius: '10px',
     cardRadius: '8px',
     controlRadius: '6px',
+    buttonRadius: '6px',
     checkboxRadius: '4px',
+    pillRadius: '9999px',
   },
 } as const;
 

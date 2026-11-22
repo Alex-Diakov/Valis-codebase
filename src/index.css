@@ -46,6 +46,7 @@
   --valis-ochre-bar: #B56B27;
   --valis-link-blue: #1D63B8;
   --valis-link-blue-underline: #98B9E2;
+  --valis-blocked-red: #9E3B2B;
 
   /* 5. Obsidian Dark Security Surface */
   --valis-security-dark-bg: #0D0E12;
@@ -75,11 +76,14 @@
   --valis-sidebar-width: 230px;
   --valis-app-workspace-max-width: 1020px;
   --valis-admin-workspace-max-width: 1100px;
-  --valis-context-drawer-width: 340px;
+  --valis-drawer-width: 420px;
+  --valis-context-drawer-width: 420px;
   --valis-panel-radius: 10px;
   --valis-card-radius: 8px;
   --valis-control-radius: 6px;
+  --valis-button-radius: 6px;
   --valis-checkbox-radius: 4px;
+  --valis-pill-radius: 9999px;
 }
 
 @theme {
@@ -130,6 +134,7 @@
   --color-valis-ochre: var(--valis-ochre-bar);
   --color-valis-blue: var(--valis-link-blue);
   --color-valis-blueunderline: var(--valis-link-blue-underline);
+  --color-valis-blockedred: var(--valis-blocked-red);
 
   /* Obsidian Dark Security Surface */
   --color-valis-darkcard: var(--valis-security-dark-bg);

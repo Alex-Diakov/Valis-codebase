@@ -1,7 +1,7 @@
 /**
  * Machine-Readable Design & Architecture Guardrails for Engineers and AI Agents (Claude Code / Cursor)
  *
- * Enforces Valis product invariants across Daily Brief, Second Brain, Valis Pulse, and Management Loop:
+ * Enforces Valis product invariants across Daily Brief, Second Brain, Valis Pulse, Management Loop, and AI Security:
  * 1. VALIS-RULE-01: Mandatory Primary Source Citations
  * 2. VALIS-RULE-02: Zero Causal Hallucination in Valis Pulse
  * 3. VALIS-RULE-03: Read-Only Connector Default & Split-Intent Triage
@@ -10,6 +10,8 @@
  * 6. VALIS-RULE-06: Zero-Travel 3-Stage Voice Capture
  * 7. VALIS-RULE-07: Recognition-Based Section Hiding & Focus Isolation
  * 8. VALIS-RULE-08: Desktop WCAG AA Readability & Low-Noise Status Hierarchy
+ * 9. VALIS-RULE-09: Scoped Permission Inheritance & Live AI Boundary Testing
+ * 10. VALIS-RULE-10: Global Visual Consistency & Unified Slide-Over Drawer (<ValisDrawer />)
  */
 
 export interface AgentUiGuardrailRule {
@@ -39,7 +41,7 @@ export const AGENT_UI_RULES: readonly AgentUiGuardrailRule[] = [
     principle: 'Read-Only Connector Default & Split-Intent Triage',
     enforcement: 'MANDATORY',
     validationRule:
-      'Valis reads company systems and changes nothing in them by default. Actionable brief tasks (Decide, I owe, Others owe, Signals) use a solid 15x15 rounded-[4px] checkbox for completion; read-only Calendar events use a dashed 15x15 rounded-[4px] hide box revealing EyeOff on hover. Only external two-way connectors (e.g., Jira) display Write-back; native Valis items display Native memory.',
+      'Valis reads company systems and changes nothing in them by default. Actionable brief tasks (Decide, I owe, Others owe, Signals) use a solid 15x15 rounded-[4px] checkbox for completion; read-only Calendar events use a dashed 15x15 rounded-[4px] hide box revealing an 11px monochrome EyeOff icon on hover plus a quiet Hide action next to Open in source ↗. Only external two-way connectors (e.g., Jira) display Write-back; native Valis items display Native memory.',
   },
   {
     id: 'VALIS-RULE-04',
@@ -53,7 +55,7 @@ export const AGENT_UI_RULES: readonly AgentUiGuardrailRule[] = [
     principle: 'Warm-Paper Editorial Geometry & Full-Screen Workspace Layout',
     enforcement: 'MANDATORY',
     validationRule:
-      'No indigo/purple AI gradients, no OS color emojis in controls, no floating cards-in-cards. Use the full-screen 230px left sidebar (--valis-sidebar) paired with a white main workspace (--valis-canvas) centered at max-w-[1020px] (App) or max-w-[1100px] (Admin) and a 340px right-hand Source Context Drawer.',
+      'No indigo/purple AI gradients, no OS color emojis in controls, no nested cards-in-cards. Use the full-screen 230px left sidebar (--valis-sidebar: #F6F3EB) with a permanently pinned bottom profile footer paired with a unified warm-paper main workspace (--valis-bg: #FAF8F3) hosting crisp #FFFFFF editorial sheets/tables (border #EAE5D9, rounded-[10px] / rounded-[8px]).',
   },
   {
     id: 'VALIS-RULE-06',
@@ -74,14 +76,21 @@ export const AGENT_UI_RULES: readonly AgentUiGuardrailRule[] = [
     principle: 'Desktop WCAG AA Readability & Low-Noise Status Hierarchy',
     enforcement: 'MANDATORY',
     validationRule:
-      'Main task & section typography MUST be 14px, metadata/actions 12.5px minimum. Completed (☑) and hidden items MUST stay legible (text-[#78736A] at 100% opacity—NEVER opacity-45 washing out contrast), and interactive Restore/Undo links MUST use high-contrast #1A1917 underlined styling. In-list update indicators MUST use a minimal 5px amber dot + plain text ("● Updated 18m ago"), NEVER bordered orange boxes that visually compete with the header filter chip. Auto-hide update dots on completed items.',
+      'Enforce unified typography: H1 22px font-semibold, H2 Drawer 18px font-semibold, H3 Section 14px font-semibold, Eyebrow 11px uppercase tracking-[0.06em], Body 14px, Meta 12.5px minimum. Completed (☑) and hidden items MUST stay legible (text-[#78736A] at 100% opacity—NEVER opacity-45), and interactive Restore/Undo links MUST use high-contrast #1A1917 underlined styling. In-list update indicators MUST use a minimal 5px amber dot + plain text ("● Updated 18m ago"), auto-hidden on completed items.',
   },
   {
     id: 'VALIS-RULE-09',
-    principle: 'Scoped Permission Inheritance & Effective Access Simulation',
+    principle: 'Scoped Permission Inheritance & Live AI Boundary Testing',
     enforcement: 'MANDATORY',
     validationRule:
-      'Every AI assistant (Valis Chat, Claude, Runbooks) strictly inherits the authenticated user\'s department scope and connector ceiling; a prompt can never widen a user\'s scope. Meetings default to Participants-Only visibility unless an explicit administrator grant is logged, and Personal Second Brains remain hardware-isolated even from managers and admins. Clicking any department or manager row in AI Security opens the 340px right-hand Effective Access Simulator Drawer to preview live Allowed Read Scope, Mutation Policy, and Strictly Blocked data.',
+      'Every AI assistant (Valis Chat, Claude, Runbooks) strictly inherits the authenticated user\'s SSO department scope and explicit Team Lead call grant; a prompt can never widen a user\'s scope. Meetings default to Participants-Only visibility and Personal Second Brains remain hardware-isolated even from managers and admins. Inside the Admin Security drawer, explicitly separate "TEAM LEAD CALL GRANT · [LEAD NAME] ONLY" from "DEPARTMENT TOOL ACCESS · ALL [N] MEMBERS", lock external Valis Deployment Team toggles ("Contract-locked · Zero customer data access"), and verify boundaries live via the Test AI Chat tab.',
+  },
+  {
+    id: 'VALIS-RULE-10',
+    principle: 'Global Visual Consistency & Unified Slide-Over Drawer',
+    enforcement: 'MANDATORY',
+    validationRule:
+      'Both Valis Employee App and Valis Admin Console MUST share the unified warm-paper canvas (--valis-bg: #FAF8F3) with crisp #FFFFFF sheets/cards. ALL right-hand inspection and configuration drawers MUST reuse the single atomic <ValisDrawer /> component (420px fixed slide-over over full-viewport bg-[#1A1917]/15 backdrop-blur-[1.5px], closing on backdrop click or Escape key, with Eyebrow + 18px H2 + 12.5px Subtitle + X). Strictly enforce the 4-button taxonomy (Primary dark #1A1917 6px, Secondary white border #DCD7CD 6px, Inline blue #1D63B8 link, rounded-full 12.5px filter/prompt pills) and WCAG AA contrast (#5C5852 inactive segmented switch text; #1E7E45 Allowed / #9E3B2B Blocked AI chat verdict headers).',
   },
 ] as const;
 

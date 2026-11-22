@@ -69,12 +69,12 @@ export const SecurityToolSegmentedSwitch: React.FC<
               }
             }}
             aria-pressed={isActive}
-            className={`text-[11.5px] px-2.5 py-0.5 rounded-[4px] border transition-colors whitespace-nowrap ${
+            className={`text-[11.5px] px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)] border transition-colors whitespace-nowrap ${
               disabled ? 'cursor-not-allowed' : 'cursor-pointer'
             } ${
               isActive
                 ? 'bg-valis-canvas border-valis-controlborder text-valis-text font-semibold'
-                : 'border-transparent text-valis-muted hover:text-valis-text'
+                : 'border-transparent text-valis-navinactive hover:text-valis-text'
             }`}
           >
             {seg.shortLabel}

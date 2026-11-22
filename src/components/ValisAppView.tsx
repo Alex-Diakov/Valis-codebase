@@ -7,7 +7,6 @@ import {
   Mic,
   Users,
   Settings,
-  X,
   ExternalLink,
 } from 'lucide-react';
 import {
@@ -26,6 +25,7 @@ import { BriefTaskItem } from '../design-system/molecules/BriefTaskItem';
 import { ScopeSegmentedControl } from '../design-system/molecules/ScopeSegmentedControl';
 import { TemporalDeltaBar } from '../design-system/molecules/TemporalDeltaBar';
 import { ProfileSwitcherFooter } from '../design-system/molecules/ProfileSwitcherFooter';
+import { ValisDrawer } from '../design-system/molecules/ValisDrawer';
 
 interface ValisAppViewProps {
   activeNav: EmployeeNavId;
@@ -416,8 +416,8 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
         />
       </aside>
 
-      {/* Right Main Scrollable Container */}
-      <div className="flex-1 h-full overflow-y-auto bg-valis-canvas flex flex-col">
+      {/* Right Main Scrollable Container (Unified Warm-Paper Canvas) */}
+      <div className="flex-1 h-full overflow-y-auto bg-valis-bg flex flex-col">
         <div className="max-w-[var(--valis-app-workspace-max-width)] w-full mx-auto px-10 py-8 flex-1 flex flex-col">
         {activeNav === 'Home' && (
           <div className="w-full flex flex-col">
@@ -437,14 +437,14 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
               />
             </div>
 
-            {/* Daily Brief Main Canvas */}
-            <div className="flex-1">
+            {/* Daily Brief Crisp Editorial Sheet */}
+            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] p-6">
               {/* Title Row + PATTERN 3: Header Temporal Delta Bar */}
               <div className="flex flex-wrap items-center justify-between gap-2 pb-3.5 mb-5 border-b border-valis-divider">
                 <div className="flex flex-wrap items-center gap-2.5">
-                  <h2 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
+                  <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                     Daily Brief
-                  </h2>
+                  </h1>
                   {(!isV2 || memoryScope === 'org-brain') && (
                     <span className="bg-valis-tagbg text-valis-text text-[12.5px] font-medium px-2.5 py-0.5 rounded-[var(--valis-control-radius)]">
                       Demo company
@@ -479,16 +479,16 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
           {/* Top Header Area */}
           <div className="pb-4 border-b border-valis-sidebarborder flex items-start justify-between">
             <div>
-              <h2 className="text-[20px] font-bold text-valis-text tracking-[-0.02em]">
+              <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                 Calendar
-              </h2>
-              <p className="text-[13.5px] text-valis-muted mt-0.5">
+              </h1>
+              <p className="text-[14px] text-valis-secondary mt-0.5">
                 View and refresh your upcoming meetings
               </p>
             </div>
             <button
               type="button"
-              className="bg-valis-canvas border border-valis-chromeborder hover:border-valis-controlhover text-valis-text text-[13px] font-medium px-3.5 py-1.5 rounded-[var(--valis-control-radius)] transition-colors cursor-pointer"
+              className="bg-valis-canvas border border-valis-controlborder hover:border-valis-text hover:bg-valis-bg text-valis-text text-[12.5px] font-medium px-3.5 py-1.5 rounded-[var(--valis-button-radius)] transition-colors cursor-pointer"
             >
               Sync
             </button>
@@ -680,9 +680,9 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
         <div className="w-full flex flex-col">
           {/* Header & Segmented Pill Control */}
           <div className="pb-4 border-b border-valis-sidebarborder">
-            <h2 className="text-[20px] font-bold text-valis-text tracking-[-0.02em] mb-3">
+            <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em] mb-3">
               My Library
-            </h2>
+            </h1>
             <div className="inline-flex items-center bg-valis-sidebar border border-valis-sidebarborder rounded-[var(--valis-control-radius)] p-1 gap-1">
               {(['All', 'Meetings', 'Voice Notes', 'Documents'] as const).map(
                 (tab) => {
@@ -945,8 +945,10 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
         <div className="w-full flex-1">
           <div className="pb-3.5 mb-4 border-b border-valis-sidebarborder flex items-center justify-between">
             <div>
-              <h2 className="text-[20px] font-bold text-valis-text">{activeNav}</h2>
-              <p className="text-[13px] text-valis-muted">
+              <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
+                {activeNav}
+              </h1>
+              <p className="text-[14px] text-valis-secondary">
                 {activeNav === 'Dictation' &&
                   'System-wide voice dictation shortcut and custom company vocabulary.'}
                 {activeNav === 'Groups' &&
@@ -1095,35 +1097,24 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
             : 'Transcript segment [00:14:22] captured during pre-meeting review:';
 
         return (
-          <aside
-            aria-label="Source context inspector drawer"
-            className="w-[var(--valis-context-drawer-width)] h-full border-l border-valis-sidebarborder bg-valis-bg p-5 shrink-0 flex flex-col overflow-y-auto"
+          <ValisDrawer
+            isOpen={true}
+            onClose={() => onSelectSource(null)}
+            eyebrow="Verified Primary Source"
+            title={selectedSource.previewTitle}
+            subtitle={selectedSource.previewMeta}
+            ariaLabel="Source context inspector drawer"
           >
-            {/* Drawer Header (Single Top-Right X Close Button) */}
-            <div className="flex items-center justify-between pb-3 mb-4 border-b border-valis-sidebarborder">
-              <span className="text-[10px] uppercase tracking-[0.1em] font-semibold text-valis-muted">
-                Verified Primary Source
-              </span>
-              <button
-                type="button"
-                onClick={() => onSelectSource(null)}
-                aria-label="Close source context drawer"
-                className="text-valis-subtle hover:text-valis-text p-1 -mr-1 rounded-[var(--valis-checkbox-radius)] hover:bg-valis-sidebarborder/60 transition-colors cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
             {/* Source System Badge + Sync Policy Badge */}
             <div className="flex flex-wrap items-center gap-1.5 mb-3">
-              <span className="bg-valis-activeitem text-valis-text text-[11px] font-medium px-2 py-0.5 rounded-[var(--valis-checkbox-radius)]">
+              <span className="bg-valis-activeitem text-valis-text text-[12px] font-medium px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)]">
                 {selectedSource.label}
               </span>
               <span
-                className={`text-[10.5px] font-medium px-2 py-0.5 rounded-[var(--valis-checkbox-radius)] border ${
+                className={`text-[12px] font-medium px-2.5 py-0.5 rounded-[var(--valis-checkbox-radius)] border ${
                   isWriteBackSource
                     ? 'bg-valis-greenbg text-valis-green border-valis-greenborder'
-                    : 'bg-valis-sidebar text-valis-muted border-valis-chromeborder'
+                    : 'bg-valis-sidebar text-valis-navinactive border-valis-chromeborder'
                 }`}
               >
                 {isNativeValisSource
@@ -1134,23 +1125,17 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
               </span>
             </div>
 
-            {/* Document / Thread Title & Rich Source Metadata */}
-            <h3 className="text-[14px] font-semibold text-valis-text leading-snug mb-1">
-              {selectedSource.previewTitle}
-            </h3>
-            <div className="text-[11.5px] text-valis-muted mb-1">
-              {selectedSource.previewMeta}
-            </div>
-            <div className="text-[11.5px] text-valis-subtle pb-3.5 mb-3.5 border-b border-valis-sidebarborder">
+            {/* Contextual Metadata Line */}
+            <div className="text-[12.5px] text-valis-subtle pb-4 mb-4 border-b border-valis-sidebarborder">
               {contextualFieldLine}
             </div>
 
             {/* Verifiable 2-Part Excerpt Card with Highlighted Trigger Sentence */}
-            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-control-radius)] p-3.5 mb-3.5">
-              <div className="text-[10px] uppercase tracking-[0.08em] text-valis-subtle font-semibold mb-2">
+            <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-card-radius)] p-4 mb-4">
+              <div className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium mb-2">
                 Source Excerpt
               </div>
-              <div className="space-y-2 text-[12.5px] leading-[1.55]">
+              <div className="space-y-2 text-[13.5px] leading-[1.55]">
                 <p className="text-valis-muted">{leadingContextSnippet}</p>
                 <p className="text-valis-text">
                   <span className="bg-valis-deltabg px-1 rounded-[2px] text-valis-text">
@@ -1162,7 +1147,7 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
 
             {/* Provenance Trace & External Action Footer */}
             <div>
-              <div className="text-[11px] text-valis-subtle">
+              <div className="text-[12.5px] text-valis-subtle">
                 {isPrivateScope
                   ? 'Extracted to Private Second Brain · Linked to Daily Brief'
                   : 'Extracted to OrgBrain · Linked to Daily Brief'}
@@ -1170,12 +1155,12 @@ export const ValisAppView: React.FC<ValisAppViewProps> = ({
               <button
                 type="button"
                 onClick={() => onSelectSource(null)}
-                className="w-full mt-3 bg-valis-canvas border border-valis-controlborder hover:border-valis-text text-valis-text text-[12px] font-medium py-1.5 px-3 rounded-[var(--valis-control-radius)] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="w-full mt-3.5 bg-valis-canvas border border-valis-controlborder hover:border-valis-text hover:bg-valis-bg text-valis-text text-[12.5px] font-medium py-2 px-3 rounded-[var(--valis-button-radius)] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
               >
                 <span>Open original in {sourceSystemName} ↗</span>
               </button>
             </div>
-          </aside>
+          </ValisDrawer>
         );
       })()}
     </div>

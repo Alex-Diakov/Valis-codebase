@@ -156,7 +156,7 @@ export const BriefTaskItem: React.FC<BriefTaskItemProps> = ({
                     <button
                       type="button"
                       onClick={() => onSelectSource(primarySource)}
-                      className="bg-valis-canvas border border-valis-controlborder hover:border-valis-controlhover text-valis-muted hover:text-valis-text text-[12.5px] px-2 py-0.5 rounded-[var(--valis-checkbox-radius)] transition-colors cursor-pointer"
+                      className="bg-valis-canvas border border-valis-controlborder hover:border-valis-text hover:bg-valis-bg text-valis-text text-[12.5px] font-medium px-2.5 py-0.5 rounded-[var(--valis-button-radius)] transition-colors cursor-pointer"
                     >
                       Open in source ↗
                     </button>

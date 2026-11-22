@@ -98,8 +98,8 @@ test('ValisMemoryService isolates OrgBrain vs Second Brain and handles Jira Prop
   assert.equal(visibleAfterSnooze.some((i) => i.id === 'owe-1'), false);
 });
 
-test('AGENT_UI_RULES enforces all 9 core guardrails and primary source citations on every brief item', () => {
-  assert.equal(AGENT_UI_RULES.length, 9);
+test('AGENT_UI_RULES enforces all 10 core guardrails and primary source citations on every brief item', () => {
+  assert.equal(AGENT_UI_RULES.length, 10);
   assert.deepEqual(
     AGENT_UI_RULES.map((r) => r.id),
     [
@@ -112,8 +112,11 @@ test('AGENT_UI_RULES enforces all 9 core guardrails and primary source citations
       'VALIS-RULE-07',
       'VALIS-RULE-08',
       'VALIS-RULE-09',
+      'VALIS-RULE-10',
     ]
   );
+  assert.equal(VALIS_TOKENS.geometry.drawerWidth, '420px');
+  assert.equal(VALIS_TOKENS.colors.blockedRed, '#9E3B2B');
   for (const item of INITIAL_BRIEF_ITEMS) {
     assert.equal(validateFactHasCitations(item.sources), true);
   }

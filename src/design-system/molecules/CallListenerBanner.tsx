@@ -312,7 +312,7 @@ export const CallListenerBanner: React.FC<CallListenerBannerProps> = ({
           <button
             type="button"
             onClick={handleStopRecording}
-            className="bg-valis-text text-valis-canvas text-[12.5px] font-medium px-3 py-1 rounded-[5px] hover:bg-valis-texthover flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="bg-valis-text hover:bg-valis-texthover text-valis-canvas text-[13px] font-medium px-3 py-1 rounded-[var(--valis-button-radius)] flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <span aria-hidden="true" className="text-[10px] leading-none">
               ■
@@ -376,7 +376,7 @@ export const CallListenerBanner: React.FC<CallListenerBannerProps> = ({
             </button>
             <button
               type="submit"
-              className="bg-valis-text text-valis-canvas text-[12.5px] font-medium px-3 py-1 rounded-[5px] hover:bg-valis-texthover transition-colors cursor-pointer"
+              className="bg-valis-text hover:bg-valis-texthover text-valis-canvas text-[13px] font-medium px-3 py-1 rounded-[var(--valis-button-radius)] transition-colors cursor-pointer"
             >
               Save to Brief
             </button>
@@ -408,7 +408,7 @@ export const CallListenerBanner: React.FC<CallListenerBannerProps> = ({
         <button
           type="button"
           onClick={handleStartVoiceNote}
-          className="bg-valis-canvas border border-valis-controlborder hover:border-valis-controlhover rounded-[5px] px-2.5 py-1 text-[12.5px] text-valis-text font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+          className="bg-valis-canvas border border-valis-controlborder hover:border-valis-text hover:bg-valis-bg rounded-[var(--valis-button-radius)] px-2.5 py-1 text-[12.5px] text-valis-text font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
         >
           <Mic className="w-[13px] h-[13px] text-valis-text shrink-0" strokeWidth={1.75} />
           <span>Voice Note</span>
@@ -442,7 +442,7 @@ export const CallListenerBanner: React.FC<CallListenerBannerProps> = ({
       <button
         type="button"
         onClick={handleStartVoiceNote}
-        className="bg-valis-canvas border border-valis-controlborder hover:border-valis-controlhover rounded-[5px] px-2.5 py-1 text-[12.5px] text-valis-text font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+        className="bg-valis-canvas border border-valis-controlborder hover:border-valis-text hover:bg-valis-bg rounded-[var(--valis-button-radius)] px-2.5 py-1 text-[12.5px] text-valis-text font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
       >
         <Mic className="w-[13px] h-[13px] text-valis-text shrink-0" strokeWidth={1.75} />
         <span>Voice Note</span>

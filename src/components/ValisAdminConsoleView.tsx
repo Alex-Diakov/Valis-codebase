@@ -187,20 +187,20 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
         onSelectUxMode={onSelectUxMode}
       />
 
-      {/* Right Main Scrollable Container for Non-Security Views */}
+      {/* Right Main Scrollable Container for Non-Security Views (Unified Warm-Paper Canvas) */}
       {activeAdminNav !== 'AI access' &&
         activeAdminNav !== 'Audit log' &&
         activeAdminNav !== 'Meeting permissions' && (
-          <div className="flex-1 h-full overflow-y-auto bg-valis-canvas flex flex-col">
+          <div className="flex-1 h-full overflow-y-auto bg-valis-bg flex flex-col">
             <div className="max-w-[var(--valis-admin-workspace-max-width)] w-full mx-auto px-10 py-8">
         {/* 1. REPORTS */}
         {activeAdminNav === 'Reports' && !openedReport && (
           <div>
             {/* Title & Subtitle */}
             <div className="mb-4">
-              <h2 className="text-[22px] font-bold text-valis-text tracking-[-0.02em]">
+              <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                 Reports
-              </h2>
+              </h1>
               <p className="text-[14px] text-valis-secondary mt-1">
                 Workflow Diagnostics and the other generated reports, by department.
               </p>
@@ -240,20 +240,20 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
               {PILL_TABS.map((tab) => {
                 const isActive = selectedType === tab;
                 return (
-                  <button
-                    key={tab}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    onClick={() => onChangeType(tab)}
-                    className={`px-3 py-1 rounded-[5px] text-[12.5px] transition-colors cursor-pointer ${
-                      isActive
-                        ? 'bg-valis-text text-valis-canvas font-medium'
-                        : 'bg-valis-canvas text-valis-secondary border border-valis-chromeborder hover:border-valis-controlhover'
-                    }`}
-                  >
-                    {tab}
-                  </button>
+                    <button
+                      key={tab}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => onChangeType(tab)}
+                      className={`rounded-full px-3.5 py-1 text-[12.5px] transition-colors cursor-pointer ${
+                        isActive
+                          ? 'bg-valis-text text-valis-canvas font-medium'
+                          : 'bg-valis-canvas text-valis-muted border border-valis-chromeborder hover:text-valis-text hover:border-valis-controlhover'
+                      }`}
+                    >
+                      {tab}
+                    </button>
                 );
               })}
             </div>
@@ -401,14 +401,14 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
           <div>
             {/* Header Row */}
             <div className="flex items-center justify-between">
-              <h2 className="text-[22px] font-bold text-valis-text tracking-[-0.02em]">
+              <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                 Valis Pulse
-              </h2>
+              </h1>
               <button
                 type="button"
                 onClick={onToggleDateRange}
                 aria-label="Toggle date range window"
-                className="bg-valis-canvas border border-valis-chromeborder hover:border-valis-controlhover text-valis-secondary text-[12.5px] px-3.5 py-1 rounded-[var(--valis-control-radius)] tabular-nums transition-colors cursor-pointer"
+                className="bg-valis-canvas border border-valis-controlborder hover:border-valis-text hover:bg-valis-bg text-valis-text text-[12.5px] font-medium px-3.5 py-1 rounded-[var(--valis-button-radius)] tabular-nums transition-colors cursor-pointer"
               >
                 {dateRangeLabel}
               </button>
@@ -420,7 +420,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             {/* Card 1: Needs attention */}
             <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] px-5 py-4 mb-6">
               <div className="mb-3">
-                <h3 className="text-[14.5px] font-bold text-valis-text">
+                <h3 className="text-[14px] font-semibold text-valis-text">
                   Needs attention
                 </h3>
                 <p className="text-[12.5px] text-valis-navinactive mt-0.5">
@@ -468,7 +468,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             {/* Section Divider: — WORK */}
             <div className="flex items-center gap-2.5 mb-3.5">
               <span className="w-4 h-[1px] bg-valis-dash inline-block" />
-              <span className="text-[11px] uppercase tracking-[0.14em] text-valis-secondary font-semibold">
+              <span className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
                 WORK
               </span>
             </div>
@@ -486,7 +486,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
 
             {/* Card 2: Is work keeping up? (Warm Valis Palette: Created valis-dots stone, Completed valis-ochre) */}
             <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] p-5 mb-4">
-              <h3 className="text-[14.5px] font-bold text-valis-text mb-5">
+              <h3 className="text-[14px] font-semibold text-valis-text mb-5">
                 Is work keeping up?
               </h3>
 
@@ -532,7 +532,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
 
             {/* Card 3: How old is open work? */}
             <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] p-5 mb-6">
-              <h3 className="text-[14.5px] font-bold text-valis-text mb-4">
+              <h3 className="text-[14px] font-semibold text-valis-text mb-4">
                 How old is open work?
               </h3>
 
@@ -566,14 +566,14 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             {/* Section Divider: — MEETINGS */}
             <div className="flex items-center gap-2.5 mb-3.5">
               <span className="w-4 h-[1px] bg-valis-dash inline-block" />
-              <span className="text-[11px] uppercase tracking-[0.14em] text-valis-secondary font-semibold">
+              <span className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
                 MEETINGS
               </span>
             </div>
 
             {/* Card 4: Where does meeting time go? */}
             <div className="bg-valis-canvas border border-valis-sidebarborder rounded-[var(--valis-panel-radius)] p-5">
-              <h3 className="text-[14.5px] font-bold text-valis-text mb-4">
+              <h3 className="text-[14px] font-semibold text-valis-text mb-4">
                 Where does meeting time go?
               </h3>
 
@@ -618,9 +618,9 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             {/* Top Header Row */}
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
-                <h2 className="text-[22px] font-bold text-valis-text tracking-[-0.02em]">
+                <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
                   Management Loop
-                </h2>
+                </h1>
                 <span className="bg-valis-earlybg text-valis-earlytext text-[12px] font-medium px-2.5 py-0.5 rounded-[5px]">
                   Early access
                 </span>
@@ -644,10 +644,10 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                     key={mode}
                     type="button"
                     onClick={() => setManagementMode(mode)}
-                    className={`px-3.5 py-1.5 rounded-[var(--valis-control-radius)] text-[12.5px] font-medium transition-colors cursor-pointer ${
+                    className={`rounded-full px-3.5 py-1 text-[12.5px] font-medium transition-colors cursor-pointer ${
                       active
                         ? 'bg-valis-text text-valis-canvas'
-                        : 'bg-valis-canvas border border-valis-chromeborder text-valis-secondary hover:border-valis-controlhover'
+                        : 'bg-valis-canvas border border-valis-chromeborder text-valis-muted hover:text-valis-text hover:border-valis-controlhover'
                     }`}
                   >
                     {mode}
@@ -659,7 +659,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             {/* Section Divider: — STRATEGY THIS QUARTER */}
             <div className="flex items-center gap-2.5 mb-3">
               <span className="w-4 h-[1px] bg-valis-dash inline-block" />
-              <span className="text-[11px] uppercase tracking-[0.14em] text-valis-secondary font-semibold">
+              <span className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
                 STRATEGY THIS QUARTER
               </span>
             </div>
@@ -676,7 +676,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
             {/* Section Divider: — PROPOSED FOR APPROVAL vs AUTOPILOT EXECUTION LOG */}
             <div className="flex items-center gap-2.5 mb-3">
               <span className="w-4 h-[1px] bg-valis-dash inline-block" />
-              <span className="text-[11px] uppercase tracking-[0.14em] text-valis-secondary font-semibold">
+              <span className="text-[11px] uppercase tracking-[0.06em] text-valis-subtle font-medium">
                 {managementMode === 'Autopilot'
                   ? 'AUTOPILOT EXECUTION LOG · RUNNING UNDER AGREED POLICY'
                   : 'PROPOSED FOR APPROVAL'}
@@ -759,10 +759,10 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                                         : 'approved',
                                   }))
                                 }
-                                className={`px-3 py-1 rounded-[5px] text-[12px] font-medium transition-colors cursor-pointer shrink-0 ${
+                                className={`px-3 py-1 rounded-[var(--valis-button-radius)] text-[13px] font-medium transition-colors cursor-pointer shrink-0 ${
                                   decision === 'approved'
                                     ? 'bg-valis-green text-valis-canvas'
-                                    : 'bg-valis-text text-valis-canvas hover:bg-valis-texthover'
+                                    : 'bg-valis-text hover:bg-valis-texthover text-valis-canvas'
                                 }`}
                               >
                                 {decision === 'approved'
@@ -780,10 +780,10 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                                         : 'skipped',
                                   }))
                                 }
-                                className={`px-3 py-1 rounded-[5px] text-[12px] font-medium border transition-colors cursor-pointer shrink-0 ${
+                                className={`px-3 py-1 rounded-[var(--valis-button-radius)] text-[12.5px] font-medium border transition-colors cursor-pointer shrink-0 ${
                                   decision === 'skipped'
                                     ? 'bg-valis-divider border-valis-underline text-valis-text'
-                                    : 'bg-valis-canvas border-valis-chromeborder text-valis-text hover:border-valis-controlhover'
+                                    : 'bg-valis-canvas border-valis-controlborder hover:border-valis-text hover:bg-valis-bg text-valis-text'
                                 }`}
                               >
                                 {decision === 'skipped' ? 'Skipped' : 'Skip'}
@@ -804,7 +804,9 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
         {activeAdminNav === 'Runbooks' && (
           <div>
             <div className="mb-4">
-              <h2 className="text-[22px] font-bold text-valis-text">Runbooks</h2>
+              <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
+                Runbooks
+              </h1>
               <p className="text-[14px] text-valis-secondary mt-1">
                 Scheduled operational and compliance checks across company systems.
               </p>
@@ -819,13 +821,13 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                     <div className="text-[13.5px] font-semibold text-valis-text">
                       {rb.title}
                     </div>
-                    <div className="text-[12px] text-valis-muted mt-0.5">
+                    <div className="text-[12.5px] text-valis-muted mt-0.5">
                       {rb.department} · {rb.schedule} · Last run: {rb.lastRun}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span
-                      className={`text-[12px] font-medium ${
+                      className={`text-[12.5px] font-medium ${
                         rb.status === 'Passed'
                           ? 'text-valis-green'
                           : 'text-valis-orange'
@@ -836,7 +838,7 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onRunRunbook(rb.id)}
-                      className="bg-valis-bg border border-valis-chromeborder hover:border-valis-text text-valis-text text-[12px] font-medium px-2.5 py-1 rounded-[5px] flex items-center gap-1 cursor-pointer"
+                      className="bg-valis-canvas border border-valis-controlborder hover:border-valis-text hover:bg-valis-bg text-valis-text text-[12.5px] font-medium px-2.5 py-1 rounded-[var(--valis-button-radius)] flex items-center gap-1 transition-colors cursor-pointer"
                     >
                       <Play className="w-3 h-3" />
                       <span>Run now</span>
@@ -852,7 +854,9 @@ export const ValisAdminConsoleView: React.FC<ValisAdminConsoleViewProps> = ({
         {activeAdminNav === 'Overview' && (
           <div>
             <div className="mb-4">
-              <h2 className="text-[22px] font-bold text-valis-text">Overview</h2>
+              <h1 className="text-[22px] font-semibold text-valis-text tracking-[-0.02em]">
+                Overview
+              </h1>
               <p className="text-[14px] text-valis-secondary mt-1">
                 demo-admin.valis.so · System connectors, diagnostic coverage, and governance summary.
               </p>
